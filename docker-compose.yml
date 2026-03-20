@@ -1,0 +1,35 @@
+version: '3.5'
+
+services: 
+  db:
+    container_name: db
+    image: postgres:17
+    restart: 'no'
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}'",
+        ]
+      interval: 1s
+      timeout: 5s
+      retries: 10
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - ${POSTGRES_PORT_MASTER}:${POSTGRES_PORT}
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    restart: always
+    ports:
+      - ${PGADMIN_EXTERNAL_PORT}:80
+    env_file:
+      - .env
+    volumes:
+      - ./pgadmin-data:/var/lib/pgadmin
