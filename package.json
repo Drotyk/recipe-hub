@@ -1,0 +1,38 @@
+{
+  "name": "algoritm-lab",
+  "version": "1.0.0",
+  "description": "container launch commands ```#bash docker compose -f ./docker-compose.yml up -d ```",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d ./ormconfig.ts",
+    "mi:c": "sh -c 'typeorm migration:create ./type-orm/migrations/${0}'",
+    "mi:show": "npm run typeorm migration:show",
+    "mi:run": "npm run typeorm -- migration:run -t each",
+    "mi:revert": "npm run typeorm -- migration:revert",
+    "docker:up":"docker compose -f ./docker-compose.yml up -d",
+    "docker:down":"docker compose --env-file ./.env -f ./docker-compose.yml down --remove-orphans"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Drotyk/algoritm-lab.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Drotyk/algoritm-lab/issues"
+  },
+  "homepage": "https://github.com/Drotyk/algoritm-lab#readme",
+  "dependencies": {
+    "pg": "^8.20.0",
+    "reflect-metadata": "^0.2.2",
+    "tsconfig-paths": "^4.2.0",
+    "typeorm": "^0.3.28"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^6.0.2"
+  }
+}
