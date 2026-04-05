@@ -3,8 +3,8 @@ import {
     Column, OneToMany,
 } from 'typeorm';
 
-import { AbstractEntity } from '@/src/Domains/Entities/__abstract.entity';
-import { RecipeEntity } from '@/src/Domains/Entities/recipe.entity';
+import { AbstractEntity } from '@/src/domains/entities/__abstract.entity';
+import { RecipeEntity } from '@/src/domains/entities/recipe.entity';
 
 
 @Entity({ name: 'user' })

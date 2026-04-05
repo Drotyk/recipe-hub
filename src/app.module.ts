@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 
-import { DbModule } from './Modules/db.module';
+import { DbModule } from '@/src/modules/db.module';
 
 
 @Module({

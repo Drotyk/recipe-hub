@@ -3,9 +3,9 @@ import {
     Entity, ManyToOne, OneToMany,
 } from 'typeorm';
 
-import { AbstractEntity } from '@/src/Domains/Entities/__abstract.entity';
-import { RecipeIngredientsEntity } from '@/src/Domains/Entities/recipe-ingredients.entity';
-import { UserEntity } from '@/src/Domains/Entities/user.entity';
+import { AbstractEntity } from '@/src/domains/entities/__abstract.entity';
+import { RecipeIngredientsEntity } from '@/src/domains/entities/recipe-ingredients.entity';
+import { UserEntity } from '@/src/domains/entities/user.entity';
 
 
 @Entity()
