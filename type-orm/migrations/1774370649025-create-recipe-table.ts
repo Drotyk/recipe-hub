@@ -1,4 +1,6 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
+import type { MigrationInterface, QueryRunner } from 'typeorm';
+
 
 export class CreateRecipeTable1774370649025 implements MigrationInterface {
 
@@ -8,16 +10,16 @@ export class CreateRecipeTable1774370649025 implements MigrationInterface {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             deleted_at TIMESTAMP,
-            name VARCHAR(200) NOT NULL,
-            texte VARCHAR(200) NOT NULL,
+            recipe_name VARCHAR(200) NOT NULL,
+            text VARCHAR(200) NOT NULL,
             author_id INTEGER NOT NULL,
             CONSTRAINT fk_author FOREIGN KEY (author_id) REFERENCES "user"(id) ON DELETE CASCADE,
-            UNIQUE (name)
+            UNIQUE (recipe_name)
         );`);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`DROP TABLE "recipe"`);
+        await queryRunner.query('DROP TABLE "recipe"');
     }
 
 }
