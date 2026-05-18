@@ -46,7 +46,7 @@ export class RecipeIngredientService {
         return {
             items,
             metadata: {
-                page: collectionOptions.perPage,
+                page: collectionOptions.page,
                 perPage: items.length,
                 totalPages: Math.ceil(count / items.length),
                 totalItems: count,

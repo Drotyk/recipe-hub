@@ -38,7 +38,7 @@ export class IngredientService {
         return {
             items,
             metadata: {
-                page: collectionOptions.perPage,
+                page: collectionOptions.page,
                 perPage: items.length,
                 totalPages: Math.ceil(count / collectionOptions.perPage),
                 totalItems: count,
