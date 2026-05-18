@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ILike } from 'typeorm';
 
+import { IngredientEntity, RecipeEntity } from '@/src/domains/entities';
 import { CollectionMetadata, CollectionOptionsDto } from '@/src/domains/view-models/collection';
-import { UpdateRecipeIngredientsDto } from '@/src/domains/view-models/recipe-ingredients';
+import { CreateRecipeIngredientsDto, UpdateRecipeIngredientsDto } from '@/src/domains/view-models/recipe-ingredients';
 import { RecipeIngredientsRepository } from '@/src/repositories/recipe-ingredients.repository';
 
 
@@ -51,5 +52,32 @@ export class RecipeIngredientService {
                 totalItems: count,
             } as CollectionMetadata,
         }
+    }
+
+    async createRecipeIngredient(createRecipeIngredientDto: CreateRecipeIngredientsDto) {
+        const existingRecipe = await this.recipeIngredientsRepository.manager
+            .getRepository(RecipeEntity)
+            .findOne({ where: { id: createRecipeIngredientDto.recipeId } });
+
+        if (!existingRecipe) {
+            throw new BadRequestException({
+                message: 'Recipe with id = recipeId was not found',
+                recipeId: createRecipeIngredientDto.recipeId,
+            });
+        }
+
+        const existingIngredient = await this.recipeIngredientsRepository.manager
+            .getRepository(IngredientEntity)
+            .findOne({ where: { id: createRecipeIngredientDto.ingredientId } });
+
+        if (!existingIngredient) {
+            throw new BadRequestException({
+                message: 'Ingredient with id = ingredientId was not found',
+                ingredientId: createRecipeIngredientDto.ingredientId,
+            });
+        }
+
+
+        return this.recipeIngredientsRepository.save(createRecipeIngredientDto);
     }
 }

@@ -3,7 +3,6 @@ import {
     Controller,
     Delete,
     Get,
-    NotImplementedException,
     Param,
     ParseIntPipe,
     Patch,
@@ -15,6 +14,7 @@ import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { RecipeIngredientService } from '@/src/business-logic';
 import { CollectionOptionsDto } from '@/src/domains/view-models/collection';
 import {
+    CreateRecipeIngredientsDto,
     RecipeIngredientsCollectionDto,
     UpdateRecipeIngredientsDto,
     ViewRecipeIngredientDto,
@@ -39,8 +39,10 @@ export class RecipeIngredientController {
     }
 
     @Post()
-    createRecipeIngredient() {
-        throw new NotImplementedException();
+    createRecipeIngredient(
+        @Body() createRecipeIngredientDto: CreateRecipeIngredientsDto,
+    ) {
+        return this.recipeIngredientService.createRecipeIngredient(createRecipeIngredientDto);
     }
 
     @Patch(':id')

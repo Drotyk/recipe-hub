@@ -3,7 +3,6 @@ import {
     Controller,
     Delete,
     Get,
-    NotImplementedException,
     Param,
     ParseIntPipe,
     Patch,
@@ -14,7 +13,7 @@ import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 import { IngredientService } from '@/src/business-logic';
 import { CollectionOptionsDto } from '@/src/domains/view-models/collection';
-import { UpdateIngredientDto, ViewIngredientDto } from '@/src/domains/view-models/ingredient';
+import { CreateIngredientDto, UpdateIngredientDto, ViewIngredientDto } from '@/src/domains/view-models/ingredient';
 
 
 @ApiTags('Ingredient')
@@ -34,8 +33,8 @@ export class IngredientController {
     }
 
     @Post()
-    createIngredient(){
-        throw new NotImplementedException();
+    createIngredient(@Body() createIngredientDto: CreateIngredientDto){
+        return this.ingredientService.createIngredient(createIngredientDto);
     }
 
     @Patch(':id')
@@ -52,5 +51,3 @@ export class IngredientController {
     }
 
 }
-
-export default IngredientController

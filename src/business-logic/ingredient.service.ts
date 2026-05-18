@@ -1,8 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { ILike } from 'typeorm';
 
 import { CollectionMetadata, CollectionOptionsDto } from '@/src/domains/view-models/collection';
-import { UpdateIngredientDto } from '@/src/domains/view-models/ingredient';
+import { CreateIngredientDto, UpdateIngredientDto } from '@/src/domains/view-models/ingredient';
 import { IngredientRepository } from '@/src/repositories/ingredient.repository';
 
 
@@ -44,5 +44,20 @@ export class IngredientService {
                 totalItems: count,
             } as CollectionMetadata,
         }
+    }
+
+    async createIngredient(createIngredientDto: CreateIngredientDto) {
+        const existingIngredient = await this.ingredientRepository.findOne({
+            where: { name: createIngredientDto.name },
+        });
+
+        if (existingIngredient) {
+            throw new ConflictException({
+               message: `Ingredient with name "${createIngredientDto.name}" already exists`,
+               entity: existingIngredient,
+            });
+        }
+
+        return this.ingredientRepository.save(existingIngredient);
     }
 }

@@ -1,8 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ILike } from 'typeorm';
 
+import { UserEntity } from '@/src/domains/entities';
 import { CollectionMetadata, CollectionOptionsDto } from '@/src/domains/view-models/collection';
-import { UpdateRecipeDto } from '@/src/domains/view-models/recipe';
+import { CreateRecipeDto, UpdateRecipeDto } from '@/src/domains/view-models/recipe';
 import { RecipeRepository } from '@/src/repositories/recipe.repository';
 
 
@@ -43,5 +44,21 @@ export class RecipeService {
                 totalItems: count,
             } as CollectionMetadata,
         }
+    }
+
+    async createRecipe(body: CreateRecipeDto) {
+        const authorUser = await this.recipeRepository
+            .manager
+            .getRepository(UserEntity)
+            .findOne({ where: { id: body.authorId } });
+
+        if (!authorUser) {
+            throw new BadRequestException({
+                message: 'User with id = authorId was not found',
+                authorId: body.authorId,
+            });
+        }
+
+        return this.recipeRepository.save(body);
     }
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ILike } from 'typeorm';
 
 import { CollectionMetadata, CollectionOptionsDto } from '@/src/domains/view-models/collection';
@@ -22,6 +22,17 @@ export class UserService {
     }
 
     createUser(body: CreateUserDto) {
+        const existingUser = this.userRepository.findOne({
+            where: { email: body.email },
+        });
+
+        if (existingUser) {
+            throw new BadRequestException({
+                message: 'User with this email already exists',
+                email: body.email,
+            });
+        }
+
         const created = this.userRepository.create(body);
 
         return this.userRepository.save(created);
