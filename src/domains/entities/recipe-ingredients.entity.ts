@@ -8,30 +8,30 @@ import { RecipeEntity } from '@/src/domains/entities/recipe.entity';
 @Entity({ name: 'recipe_ingredients' })
 export class RecipeIngredientsEntity extends AbstractEntity{
 
-    @Column({ name: 'recipe_id' })
+    @Column()
     recipeId: number;
 
-    @JoinColumn({ name: 'recipe_id' })
+    @JoinColumn()
     @ManyToOne(
         () => RecipeEntity,
         (recipe) => recipe.id,
     )
     recipe: RecipeEntity;
 
-    @Column({ name: 'ingredient_id' })
+    @Column()
     ingredientId: number;
 
-    @JoinColumn({ name: 'ingredient_id' })
+    @JoinColumn()
     @ManyToOne(
         () => IngredientEntity,
         (ingredient) => ingredient.id,
     )
     ingredient: IngredientEntity;
 
-    @Column({ name: 'ingredient_name' })
+    @Column()
     amount: number;
 
-    @Column({ name: 'ingredient_description' })
+    @Column()
     unit: string;
 
 }

@@ -1,22 +1,21 @@
 import {
     Column,
-    Entity, JoinColumn, OneToMany,
+    Entity, OneToMany,
 } from 'typeorm';
 
 import { AbstractEntity } from '@/src/domains/entities/__abstract.entity';
 import { RecipeIngredientsEntity } from '@/src/domains/entities/recipe-ingredients.entity';
 
 
-@Entity()
+@Entity({ name: 'ingredient' })
 export class IngredientEntity extends AbstractEntity{
 
-    @Column({ name: 'name' })
+    @Column()
      name: string;
 
-    @JoinColumn({ name: 'ingredient_id' })
     @OneToMany(
-        () => IngredientEntity,
-        (ingredient) => ingredient.name,
+        () => RecipeIngredientsEntity,
+        (recipeIngredients) => recipeIngredients.ingredient,
     )
     recipeIngredients: RecipeIngredientsEntity[];
 }

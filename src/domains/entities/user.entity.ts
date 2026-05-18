@@ -21,7 +21,7 @@ export class UserEntity extends AbstractEntity {
 
     @OneToMany(
         () => RecipeEntity,
-        (recipe) => recipe.author_id,
+        (recipe) => recipe.authorId,
     )
     recipes: RecipeEntity[];
 }

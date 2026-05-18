@@ -2,6 +2,7 @@ import { resolve } from 'path';
 
 import { configDotenv } from 'dotenv';
 import { DataSource, DataSourceOptions } from 'typeorm';
+import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
 
 configDotenv({ path: resolve(process.cwd(), '.env') });
@@ -21,6 +22,7 @@ export const ormConfig:DataSourceOptions={
   synchronize: false,
   logging: true,
 
+  namingStrategy: new SnakeNamingStrategy(),
   entities: [resolve(process.cwd(), `src/**/*.entity.${entityFileExtension}`)],
   migrations: [resolve(process.cwd(), `${isTypeScriptRuntime ? 'type-orm' : 'dist/type-orm'}/migrations/**/*.${migrationFileExtension}`)],
 }

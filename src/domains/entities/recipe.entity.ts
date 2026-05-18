@@ -8,17 +8,17 @@ import { RecipeIngredientsEntity } from '@/src/domains/entities/recipe-ingredien
 import { UserEntity } from '@/src/domains/entities/user.entity';
 
 
-@Entity()
+@Entity({ name: 'recipe' })
 export class RecipeEntity extends AbstractEntity {
 
-    @Column({ name: 'name' })
+    @Column()
     name: string;
 
-    @Column({ name: 'text' })
+    @Column()
     text: string;
 
-    @Column({ name: 'author_id' })
-    author_id: string;
+    @Column()
+    authorId: number;
 
     @ManyToOne(() => UserEntity)
     author: UserEntity;
