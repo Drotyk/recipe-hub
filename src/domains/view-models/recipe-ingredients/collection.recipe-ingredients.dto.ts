@@ -6,7 +6,7 @@ import { ViewRecipeIngredientDto } from '@/src/domains/view-models/recipe-ingred
 
 
 @Exclude()
-export class RecipeIngredientsCollectionDto extends BaseCollectionDto<ViewRecipeIngredientDto> {
+export class CollectionRecipeIngredientsDto extends BaseCollectionDto<ViewRecipeIngredientDto> {
     @Type(() => ViewRecipeIngredientDto)
     @ApiProperty({ isArray: true, type: ViewRecipeIngredientDto })
     @Expose()

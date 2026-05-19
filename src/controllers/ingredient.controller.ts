@@ -10,6 +10,7 @@ import {
     Query,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { plainToInstance } from 'class-transformer';
 
 import { IngredientService } from '@/src/business-logic';
 import { CollectionOptionsDto } from '@/src/domains/view-models/collection';
@@ -23,31 +24,41 @@ export class IngredientController {
 
     @Get('collection')
     @ApiOkResponse({ type: ViewIngredientDto })
-    getCollection(@Query() collectionOptions: CollectionOptionsDto){
-        return this.ingredientService.getIngredientCollection(collectionOptions);
+  async getCollection(@Query() collectionOptions: CollectionOptionsDto) {
+        const data = await this.ingredientService.getIngredientCollection(collectionOptions);
+
+        return plainToInstance(ViewIngredientDto, data);
     }
 
     @Get(':id')
-    getIngredient(@Param('id', ParseIntPipe) id: number){
-        return this.ingredientService.getOneById(id);
+    async getIngredient (@Param('id', ParseIntPipe) id: number){
+        const data = await this.ingredientService.getOneById(id);
+
+        return plainToInstance(ViewIngredientDto, data);
     }
 
     @Post()
-    createIngredient(@Body() createIngredientDto: CreateIngredientDto){
-        return this.ingredientService.createIngredient(createIngredientDto);
+    async createIngredient(@Body() createIngredientDto: CreateIngredientDto){
+        const data = await this.ingredientService.createIngredient(createIngredientDto);
+
+        return plainToInstance(ViewIngredientDto, data);
     }
 
     @Patch(':id')
-    updateIngredient(
+    async updateIngredient(
         @Param('id', ParseIntPipe) id: number,
         @Body() body: UpdateIngredientDto,
     ) {
-        return this.ingredientService.updateIngredient(id, body)
+        const data = await this.ingredientService.updateIngredient(id, body)
+
+        return plainToInstance(ViewIngredientDto, data);
     }
 
     @Delete(':id')
-    deleteIngredient(@Param('id', ParseIntPipe)id: number){
-        return this.ingredientService.deleteIngredient(id)
+     async deleteIngredient(@Param('id', ParseIntPipe)id: number){
+        const data = await this.ingredientService.deleteIngredient(id)
+
+        return plainToInstance(ViewIngredientDto, data);
     }
 
 }

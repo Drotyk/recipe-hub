@@ -10,10 +10,11 @@ import {
     Query,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { plainToInstance } from 'class-transformer';
 
 import { RecipeService } from '@/src/business-logic';
 import { CollectionOptionsDto } from '@/src/domains/view-models/collection';
-import { CreateRecipeDto, UpdateRecipeDto } from '@/src/domains/view-models/recipe';
+import { CreateRecipeDto, UpdateRecipeDto, ViewRecipeDto } from '@/src/domains/view-models/recipe';
 import { ViewUserDto } from '@/src/domains/view-models/user';
 
 
@@ -24,32 +25,42 @@ export class RecipeController {
 
     @Get('collection')
     @ApiOkResponse({ type: ViewUserDto })
-    getCollection(@Query() collectionOptions: CollectionOptionsDto) {
-        return this.recipeService.getRecipeCollection(collectionOptions)
+    async getCollection(@Query() collectionOptions: CollectionOptionsDto) {
+        const data = await this.recipeService.getRecipeCollection(collectionOptions);
+
+        return plainToInstance(ViewRecipeDto, data);
     }
 
     @Get(':id')
-    getRecipe(@Param('id', ParseIntPipe) id: number) {
-        return this.recipeService.getOneById(id);
+    async getRecipe(@Param('id', ParseIntPipe) id: number) {
+        const data = await this.recipeService.getOneById(id);
+
+        return plainToInstance(ViewRecipeDto, data);
     }
 
     @Post()
-    createRecipe(
+    async createRecipe(
         @Body() body: CreateRecipeDto,
     ) {
-        return this.recipeService.createRecipe(body);
+        const data = await this.recipeService.createRecipe(body);
+
+        return plainToInstance(ViewRecipeDto, data);
     }
 
     @Patch(':id')
-    updateRecipe(
+    async updateRecipe(
         @Param('id', ParseIntPipe) id: number,
         @Body() body: UpdateRecipeDto,
     ) {
-        return this.recipeService.updateRecipe(id, body);
+        const data = await this.recipeService.updateRecipe(id, body);
+
+        return plainToInstance(ViewRecipeDto, data);
     }
 
     @Delete(':id')
-    deleteRecipe(@Param('id', ParseIntPipe) id: number) {
-        return this.recipeService.deleteRecipe(id);
+    async deleteRecipe(@Param('id', ParseIntPipe) id: number) {
+        const data = await this.recipeService.deleteRecipe(id);
+
+        return plainToInstance(ViewRecipeDto, data);
     }
 }

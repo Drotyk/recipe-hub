@@ -6,7 +6,7 @@ import { ViewUserDto } from '@/src/domains/view-models/user/view.user.dto';
 
 
 @Exclude()
-export class UserCollectionDto extends BaseCollectionDto<ViewUserDto> {
+export class CollectionUserDto extends BaseCollectionDto<ViewUserDto> {
     @Type(() => ViewUserDto)
     @ApiProperty({ isArray: true, type: ViewUserDto })
     @Expose()

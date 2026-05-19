@@ -10,12 +10,13 @@ import {
     Query,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { plainToInstance } from 'class-transformer';
 
 import { RecipeIngredientService } from '@/src/business-logic';
 import { CollectionOptionsDto } from '@/src/domains/view-models/collection';
 import {
     CreateRecipeIngredientsDto,
-    RecipeIngredientsCollectionDto,
+    CollectionRecipeIngredientsDto,
     UpdateRecipeIngredientsDto,
     ViewRecipeIngredientDto,
 } from '@/src/domains/view-models/recipe-ingredients';
@@ -27,34 +28,44 @@ export class RecipeIngredientController {
     constructor(private readonly recipeIngredientService: RecipeIngredientService) {}
 
     @Get('collection')
-    @ApiOkResponse({ type: RecipeIngredientsCollectionDto })
-    getRecipeIngredientCollection(@Query() collectionOptions: CollectionOptionsDto) {
-        return this.recipeIngredientService.getRecipeIngredientCollection(collectionOptions);
+    @ApiOkResponse({ type: CollectionRecipeIngredientsDto })
+    async getRecipeIngredientCollection(@Query() collectionOptions: CollectionOptionsDto) {
+        const data = await this.recipeIngredientService.getRecipeIngredientCollection(collectionOptions);
+
+        return plainToInstance(CollectionRecipeIngredientsDto, data);
     }
 
     @Get(':id')
     @ApiOkResponse({ type: ViewRecipeIngredientDto })
-    getRecipeIngredient(@Param('id', ParseIntPipe) id: number) {
-        return this.recipeIngredientService.getOneById(id);
+    async getRecipeIngredient(@Param('id', ParseIntPipe) id: number) {
+        const data = await this.recipeIngredientService.getOneById(id);
+
+        return plainToInstance(ViewRecipeIngredientDto, data);
     }
 
     @Post()
-    createRecipeIngredient(
+    async createRecipeIngredient(
         @Body() createRecipeIngredientDto: CreateRecipeIngredientsDto,
     ) {
-        return this.recipeIngredientService.createRecipeIngredient(createRecipeIngredientDto);
+        const data = await this.recipeIngredientService.createRecipeIngredient(createRecipeIngredientDto);
+
+        return plainToInstance(ViewRecipeIngredientDto, data);
     }
 
     @Patch(':id')
-    updateRecipeIngredient(
+    async updateRecipeIngredient(
         @Param('id', ParseIntPipe) id: number,
         @Body() body: UpdateRecipeIngredientsDto,
     ) {
-        return this.recipeIngredientService.updateRecipeIngredient(id, body);
+        const data = await this.recipeIngredientService.updateRecipeIngredient(id, body);
+
+        return plainToInstance(ViewRecipeIngredientDto, data);
     }
 
     @Delete(':id')
-    deleteRecipeIngredient(@Param('id', ParseIntPipe) id: number) {
-        return this.recipeIngredientService.deleteRecipeIngredient(id);
+    async deleteRecipeIngredient(@Param('id', ParseIntPipe) id: number) {
+        const data = await this.recipeIngredientService.deleteRecipeIngredient(id);
+
+        return plainToInstance(ViewRecipeIngredientDto, data);
     }
 }

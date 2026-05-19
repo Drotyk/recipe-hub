@@ -22,8 +22,10 @@ export class IngredientService {
         return this.getOneById(id);
     }
 
-    deleteIngredient(id: number) {
-        return this.ingredientRepository.softDelete( id );
+    async deleteIngredient(id: number) {
+        await this.ingredientRepository.softDelete( id );
+
+        return this.getOneById(id);
     }
 
     async getIngredientCollection(collectionOptions: CollectionOptionsDto) {

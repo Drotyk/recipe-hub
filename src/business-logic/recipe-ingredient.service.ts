@@ -23,8 +23,10 @@ export class RecipeIngredientService {
         return this.getOneById(id);
     }
 
-    deleteRecipeIngredient(id: number) {
-        return this.recipeIngredientsRepository.softDelete(id);
+    async deleteRecipeIngredient(id: number) {
+        await this.recipeIngredientsRepository.softDelete(id);
+
+        return this.getOneById(id);
     }
 
     async getRecipeIngredientCollection(collectionOptions: CollectionOptionsDto){

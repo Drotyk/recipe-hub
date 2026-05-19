@@ -17,8 +17,10 @@ export class UserService {
         });
     }
 
-    deleteUser(id: number) {
-        return this.userRepository.softDelete( id );
+    async deleteUser(id: number) {
+        await this.userRepository.softDelete( id );
+
+        return this.getOneById(id);
     }
 
     createUser(body: CreateUserDto) {

@@ -14,8 +14,7 @@ import { plainToInstance } from 'class-transformer';
 
 import { UserService } from '@/src/business-logic/user.service';
 import { CollectionOptionsDto } from '@/src/domains/view-models/collection';
-import { CreateUserDto, ViewUserDto } from '@/src/domains/view-models/user';
-import { UpdateUserDto } from '@/src/domains/view-models/user/update.user.dto';
+import { CollectionUserDto, CreateUserDto, UpdateUserDto, ViewUserDto } from '@/src/domains/view-models/user';
 
 
 @ApiTags('User')
@@ -24,9 +23,11 @@ export class UserController {
     constructor(private readonly userService: UserService) {}
 
     @Get('collection')
-    @ApiOkResponse({ type: ViewUserDto })
-    getCollection(@Query() collectionOptions: CollectionOptionsDto) {
-        return this.userService.getUserCollection(collectionOptions);
+    @ApiOkResponse({ type: CollectionUserDto })
+    async getCollection(@Query() collectionOptions: CollectionOptionsDto) {
+        const data = await this.userService.getUserCollection(collectionOptions);
+
+        return plainToInstance(CollectionUserDto, data);
     }
 
     @Get(':id')
@@ -37,20 +38,26 @@ export class UserController {
     }
 
     @Post()
-    createUser(@Body() body: CreateUserDto) {
-        return this.userService.createUser(body);
+    async createUser(@Body() body: CreateUserDto) {
+        const user = await this.userService.createUser(body);
+
+        return plainToInstance(ViewUserDto, user);
     }
 
     @Patch(':id')
-    updateUser(
+   async updateUser(
         @Param('id', ParseIntPipe) id: number,
         @Body() body: UpdateUserDto,
     ) {
-        return this.userService.updateUser(id, body)
+        const user= await this.userService.updateUser(id, body)
+
+        return plainToInstance(ViewUserDto, user);
     }
 
     @Delete(':id')
-    deleteUser(@Param('id', ParseIntPipe)id: number) {
-        return this.userService.deleteUser(id)
+    async deleteUser(@Param('id', ParseIntPipe)id: number) {
+        const user = await this.userService.deleteUser(id)
+
+        return plainToInstance(ViewUserDto, user);
     }
 }
