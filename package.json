@@ -10,8 +10,12 @@
     "mi:show": "npm run typeorm migration:show",
     "mi:run": "npm run typeorm -- migration:run -t each",
     "mi:revert": "npm run typeorm -- migration:revert",
-    "docker:up":"docker compose -f ./docker-compose.yml up -d",
-    "docker:down":"docker compose --env-file ./.env -f ./docker-compose.yml down --remove-orphans"
+    "docker:up": "docker compose -f ./docker-compose.yml up -d",
+    "docker:down": "docker compose --env-file ./.env -f ./docker-compose.yml down --remove-orphans",
+    "build": "nest build",
+    "lint": "eslint . --ext .ts,.js --fix",
+    "start": "nest start",
+    "start:dev": "nest start --watch"
   },
   "repository": {
     "type": "git",
@@ -24,13 +28,30 @@
   },
   "homepage": "https://github.com/Drotyk/algoritm-lab#readme",
   "dependencies": {
+    "@nestjs/common": "^11.1.18",
+    "@nestjs/core": "^11.1.18",
+    "@nestjs/platform-express": "^11.1.18",
+    "@nestjs/swagger": "^11.2.6",
+    "@nestjs/typeorm": "^11.0.1",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.4",
     "pg": "^8.20.0",
     "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "swagger-themes": "^1.4.3",
     "tsconfig-paths": "^4.2.0",
-    "typeorm": "^0.3.28"
+    "typeorm": "^0.3.28",
+    "typeorm-naming-strategies": "^4.1.0"
   },
   "devDependencies": {
-    "@types/node": "^25.5.0",
+    "@nestjs/cli": "^11.0.17",
+    "@types/node": "^25.5.2",
+    "@typescript-eslint/eslint-plugin": "^8.29.1",
+    "@typescript-eslint/parser": "^8.29.1",
+    "eslint": "^9.24.0",
+    "eslint-plugin-eslint-comments": "^3.2.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-unicorn": "^57.0.0",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^6.0.2"

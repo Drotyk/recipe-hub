@@ -1,13 +1,18 @@
-import { DataSource, DataSourceOptions } from "typeorm";
-import { configDotenv } from "dotenv";
-import { resolve } from "path";
+import { resolve } from 'path';
 
+import { configDotenv } from 'dotenv';
+import { DataSource, DataSourceOptions } from 'typeorm';
+import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
 
 configDotenv({ path: resolve(process.cwd(), '.env') });
 
-const ormConfig:DataSourceOptions={
-  type: "postgres",
+const isTypeScriptRuntime = __filename.endsWith('.ts');
+const entityFileExtension = isTypeScriptRuntime ? 'ts' : 'js';
+const migrationFileExtension = isTypeScriptRuntime ? 'ts' : 'js';
+
+export const ormConfig:DataSourceOptions={
+  type: 'postgres',
   host: process.env['POSTGRES_HOST'],
   port: Number(process.env['POSTGRES_PORT']),
   username: process.env['POSTGRES_USER'],
@@ -17,8 +22,9 @@ const ormConfig:DataSourceOptions={
   synchronize: false,
   logging: true,
 
-  entities: ["src/entity/**/*.ts"],
-  migrations: [resolve(process.cwd(), "type-orm/migrations/**/*.ts")],
+  namingStrategy: new SnakeNamingStrategy(),
+  entities: [resolve(process.cwd(), `src/**/*.entity.${entityFileExtension}`)],
+  migrations: [resolve(process.cwd(), `${isTypeScriptRuntime ? 'type-orm' : 'dist/type-orm'}/migrations/**/*.${migrationFileExtension}`)],
 }
 
 export default new DataSource(ormConfig);

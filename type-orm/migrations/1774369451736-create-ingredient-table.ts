@@ -1,4 +1,6 @@
-import { MigrationInterface, QueryRunner } from "typeorm";
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
+import type { MigrationInterface, QueryRunner } from 'typeorm';
+
 
 export class CreateIngredientTable1774369451736 implements MigrationInterface {
 
@@ -14,7 +16,7 @@ export class CreateIngredientTable1774369451736 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`DROP TABLE "ingredient"`);
+        await queryRunner.query('DROP TABLE "ingredient"');
     }
 
 }
