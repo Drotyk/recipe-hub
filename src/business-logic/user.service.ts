@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ILike } from 'typeorm';
 
+
+import { hashPassword } from '@/src/common/utils';
 import { CollectionMetadata, CollectionOptionsDto } from '@/src/domains/view-models/collection';
 import { CreateUserDto } from '@/src/domains/view-models/user';
 import { UpdateUserDto } from '@/src/domains/view-models/user/update.user.dto';
@@ -23,8 +25,8 @@ export class UserService {
         return this.getOneById(id);
     }
 
-    createUser(body: CreateUserDto) {
-        const existingUser = this.userRepository.findOne({
+    async createUser(body: CreateUserDto) {
+        const existingUser = await this.userRepository.findOne({
             where: { email: body.email },
         });
 
@@ -35,7 +37,12 @@ export class UserService {
             });
         }
 
-        const created = this.userRepository.create(body);
+        const password = await hashPassword(body.password);
+
+        const created = this.userRepository.create({
+            ...body,
+            password,
+        });
 
         return this.userRepository.save(created);
     }
@@ -66,5 +73,11 @@ export class UserService {
                 totalItems: count,
             } as CollectionMetadata,
         }
+    }
+
+    async getOneByEmail(email: string) {
+        return this.userRepository.findOne({
+            where: { email },
+        })
     }
 }
