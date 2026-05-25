@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "preinstall": "node ../../scripts/enforce-root-install.mjs",
-    "dev": "vite",
+    "start:dev": "vite",
     "build": "tsc --noEmit -p tsconfig.app.json && vite build",
     "preview": "vite preview"
   },

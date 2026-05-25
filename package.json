@@ -3,6 +3,7 @@
   "private": true,
   "packageManager": "pnpm@11.3.0",
   "scripts": {
+    "start:dev": "pnpm -r start:dev",
     "preinstall": "node ./scripts/enforce-root-install.mjs",
     "docker:up": "docker compose -f ./docker-compose.yml up -d",
     "docker:down": "docker compose --env-file ./.env -f ./docker-compose.yml down --remove-orphans",
