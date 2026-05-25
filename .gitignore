@@ -6,3 +6,6 @@
 /dist
 /.idea
 /apps/*/node_modules/
+/apps/*/*.tsbuildinfo
+/apps/*/vite.config.js
+/apps/*/vite.config.d.ts
