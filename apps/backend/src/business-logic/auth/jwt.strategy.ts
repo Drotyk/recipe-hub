@@ -1,12 +1,11 @@
-import { resolve } from 'path';
-
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { configDotenv } from 'dotenv';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
+import { loadEnv } from '@/src/common/utils';
 
-configDotenv({ path: resolve(process.cwd(), '.env') });
+
+loadEnv();
 
 
 @Injectable()

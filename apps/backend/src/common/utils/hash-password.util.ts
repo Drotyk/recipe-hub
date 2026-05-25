@@ -1,10 +1,9 @@
-import { resolve } from 'path';
-
 import * as bcrypt from 'bcrypt';
-import { configDotenv } from 'dotenv';
+
+import { loadEnv } from './load-env.util';
 
 
-configDotenv({ path: resolve(process.cwd(), '.env') });
+loadEnv();
 
 export const hashPassword = (password: string) => {
     return bcrypt.hash(

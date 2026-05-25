@@ -1,13 +1,17 @@
 import { resolve } from 'path';
 
-import { configDotenv } from 'dotenv';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
+import { loadEnv } from './src/common/utils';
 
-configDotenv({ path: resolve(process.cwd(), '.env') });
+
+loadEnv();
 
 const isTypeScriptRuntime = __filename.endsWith('.ts');
+const runtimeRoot = isTypeScriptRuntime
+  ? process.cwd()
+  : resolve(process.cwd(), '../../dist/apps/backend');
 const entityFileExtension = isTypeScriptRuntime ? 'ts' : 'js';
 const migrationFileExtension = isTypeScriptRuntime ? 'ts' : 'js';
 
@@ -23,8 +27,8 @@ export const ormConfig:DataSourceOptions={
   logging: true,
 
   namingStrategy: new SnakeNamingStrategy(),
-  entities: [resolve(process.cwd(), `src/**/*.entity.${entityFileExtension}`)],
-  migrations: [resolve(process.cwd(), `${isTypeScriptRuntime ? 'type-orm' : 'dist/type-orm'}/migrations/**/*.${migrationFileExtension}`)],
+  entities: [resolve(runtimeRoot, `src/**/*.entity.${entityFileExtension}`)],
+  migrations: [resolve(runtimeRoot, `type-orm/migrations/**/*.${migrationFileExtension}`)],
 }
 
 export default new DataSource(ormConfig);
