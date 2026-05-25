@@ -1,14 +1,12 @@
-import { resolve } from 'path';
-
 import { Module, ValidationPipe } from '@nestjs/common';
 import { APP_PIPE } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
-import { configDotenv } from 'dotenv';
 
 
 import { UserService } from '@/src/business-logic';
 import { IngredientService, RecipeIngredientService, RecipeService } from '@/src/business-logic';
 import { AuthService } from '@/src/business-logic/auth';
+import { loadEnv } from '@/src/common/utils';
 import {
     RecipeController,
     UserController,
@@ -19,7 +17,7 @@ import {
 import { DbModule } from '@/src/modules/db.module';
 
 
-configDotenv({ path: resolve(process.cwd(), '.env') });
+loadEnv();
 
 @Module({
     imports: [
