@@ -9,11 +9,10 @@ import {
     Post,
     Query,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 
 import { IngredientService } from '@/src/business-logic';
-import { Public } from '@/src/common/decorators';
 import { CollectionOptionsDto } from '@/src/domains/view-models/collection';
 import {
     CollectionIngredientDto,
@@ -24,13 +23,11 @@ import {
 
 
 @ApiTags('Ingredient')
-@ApiBearerAuth()
 @Controller ('ingredient')
 export class IngredientController {
     constructor(private readonly ingredientService: IngredientService) {}
 
     @Get('collection')
-    @Public()
     @ApiOkResponse({ type: CollectionIngredientDto })
   async getCollection(@Query() collectionOptions: CollectionOptionsDto) {
         const data = await this.ingredientService.getIngredientCollection(collectionOptions);

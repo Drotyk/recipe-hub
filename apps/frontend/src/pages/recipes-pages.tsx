@@ -5,7 +5,6 @@ import {
   Ingredient,
   Recipe,
   RecipeIngredient,
-  Comment,
   createIngredient,
   createRecipe,
   createRecipeIngredient,
@@ -18,9 +17,6 @@ import {
   readApiError,
   updateRecipe,
   updateRecipeIngredient,
-  getRecipeComments,
-  createComment,
-  deleteComment,
 } from '../api';
 import { useAuth } from '../auth';
 import { PAGE_SIZE, formatDate, type PageProps } from '../app/shared';
@@ -33,168 +29,10 @@ import { EntityListButton } from '../components/list';
 import { ConfirmModal } from '../components/modal';
 import { ContentList, DetailSkeleton, EmptyState, ListSkeleton, PanelHeader, StatusMessage } from '../components/surface';
 
-function getRecipeSearchFromUrl() {
-  return new URLSearchParams(window.location.search).get('search') ?? '';
-}
-
-export function DashboardPage({ onNavigate, onMessage }: PageProps) {
-  const [recipes, setRecipes] = useState<CollectionResponse<Recipe> | null>(null);
-  const [search, setSearch] = useState('');
-  const [suggestions, setSuggestions] = useState<Recipe[]>([]);
-  const [ingredientSuggestions, setIngredientSuggestions] = useState<Ingredient[]>([]);
-  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
-
-  useEffect(() => {
-    async function loadSummary() {
-      try {
-        const data = await getRecipes({ page: 1, perPage: 1 });
-        setRecipes(data);
-      } catch (error) {
-        onMessage('error', await readApiError(error));
-      }
-    }
-
-    void loadSummary();
-  }, []);
-
-  useEffect(() => {
-    const query = search.trim();
-
-    if (query.length < 2) {
-      setSuggestions([]);
-      setSuggestionsOpen(false);
-      return;
-    }
-
-    let active = true;
-    const timer = window.setTimeout(async () => {
-      try {
-        const data = await getRecipes({ page: 1, perPage: 5, search: query });
-
-        if (!active) {
-          return;
-        }
-
-        setSuggestions(data.items);
-        const ingredientData = await getIngredients({ page: 1, perPage: 5, search: query });
-
-        if (!active) {
-          return;
-        }
-
-        setIngredientSuggestions(ingredientData.items);
-        setSuggestionsOpen(data.items.length > 0 || ingredientData.items.length > 0);
-      } catch {
-        if (active) {
-          setSuggestions([]);
-          setIngredientSuggestions([]);
-          setSuggestionsOpen(false);
-        }
-      }
-    }, 220);
-
-    return () => {
-      active = false;
-      window.clearTimeout(timer);
-    };
-  }, [search]);
-
-  return (
-    <section className="command-hero dashboard-command-hero">
-      <div className="command-hero-copy">
-        <span className="command-eyebrow">Панель</span>
-        <h2>Що готуємо сьогодні?</h2>
-      </div>
-
-      <div className="command-search-wrap">
-        <form
-          className="command-search"
-          onSubmit={(event) => {
-            event.preventDefault();
-            const query = search.trim();
-
-            setSuggestionsOpen(false);
-            onNavigate(query ? `/recipes?search=${encodeURIComponent(query)}` : '/recipes');
-          }}
-        >
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            onFocus={() => setSuggestionsOpen(suggestions.length > 0 || ingredientSuggestions.length > 0)}
-            placeholder="Введіть назву рецепта або інгредієнт, що у вас є"
-          />
-        </form>
-
-        {suggestionsOpen ? (
-          <div className="command-suggestions">
-            {suggestions.length ? <div className="command-suggestion-label">Рецепти</div> : null}
-            {suggestions.map((recipe) => (
-              <button
-                key={recipe.id}
-                type="button"
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => {
-                  setSuggestionsOpen(false);
-                  onNavigate(`/recipes/${recipe.id}`);
-                }}
-              >
-                <span>
-                  <strong>{recipe.name}</strong>
-                  <small>{recipe.author?.name ?? `Користувач #${recipe.authorId}`}</small>
-                </span>
-                <small>{formatDate(recipe.updatedAt)}</small>
-              </button>
-            ))}
-            {ingredientSuggestions.length ? <div className="command-suggestion-label">Інгредієнти</div> : null}
-            {ingredientSuggestions.map((ingredient) => (
-              <button
-                key={ingredient.id}
-                type="button"
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => {
-                  setSuggestionsOpen(false);
-                  onNavigate(`/ingredients/${ingredient.id}`);
-                }}
-              >
-                <span>
-                  <strong>{ingredient.name}</strong>
-                  <small>Інгредієнт у вашій базі</small>
-                </span>
-                <small>{formatDate(ingredient.updatedAt)}</small>
-              </button>
-            ))}
-          </div>
-        ) : null}
-      </div>
-
-      <div className="command-actions" aria-label="Швидкі дії">
-        <button type="button" onClick={() => onNavigate('/recipes/new')}>
-          <span className="command-action-icon">+</span>
-          Створити рецепт
-        </button>
-        <button type="button" onClick={() => onNavigate('/ingredients')}>
-          <span className="command-action-icon">#</span>
-          Внести інгредієнти
-        </button>
-        <button type="button" onClick={() => onNavigate('/recipes')}>
-          <span className="command-action-icon">?</span>
-          Відкрити рецепти
-        </button>
-      </div>
-
-      <div className="command-stats">
-        <span>{recipes?.metadata.totalItems ?? 0} рецептів</span>
-        <span>База даних</span>
-        <span>Окрема сторінка</span>
-      </div>
-    </section>
-  );
-}
-
 export function RecipesPage({ onNavigate, onMessage }: PageProps) {
   const [recipes, setRecipes] = useState<CollectionResponse<Recipe> | null>(null);
-  const [search, setSearch] = useState(getRecipeSearchFromUrl);
-  const [debouncedSearch, setDebouncedSearch] = useState(getRecipeSearchFromUrl);
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(PAGE_SIZE);
   const [loading, setLoading] = useState(true);
@@ -230,9 +68,9 @@ export function RecipesPage({ onNavigate, onMessage }: PageProps) {
   return (
     <>
       <PageHeader
-        eyebrow="База даних"
-        title="Рецепти"
-        description="Окрема сторінка для пошуку, перегляду та керування рецептами."
+        eyebrow="Рецепти"
+        title="Каталог рецептів"
+        description="Переглядайте рецепти нашої спільноти, шукайте страви за назвою та відкривайте для себе нові смаки."
         actions={
           <Button variant="primary" type="button" onClick={() => onNavigate('/recipes/new')}>
             Створити рецепт
@@ -240,26 +78,28 @@ export function RecipesPage({ onNavigate, onMessage }: PageProps) {
         }
       />
 
-      <section className="content-grid command-content-grid">
-        <div className="panel command-results-panel">
-          <PanelHeader title="База даних рецептів" meta={`${recipes?.metadata.totalItems ?? 0} всього`} />
+      <section className="summary-band">
+        <article className="summary-item">
+          <span>Усього страв</span>
+          <strong>{recipes?.metadata.totalItems ?? 0}</strong>
+        </article>
+        <article className="summary-item">
+          <span>Рецептів на сторінці</span>
+          <strong>{recipes?.metadata.perPage ?? 0}</strong>
+        </article>
+        <article className="summary-item">
+          <span>Всього сторінок</span>
+          <strong>{recipes?.metadata.totalPages ?? 0}</strong>
+        </article>
+      </section>
 
-          <form
-            className="toolbar"
-            onSubmit={(event) => {
-              event.preventDefault();
-              setPage(1);
-              setDebouncedSearch(search);
-              void loadRecipes(search, 1, perPage);
-            }}
-          >
-            <TextInput
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="Пошук рецептів за назвою..."
-            />
-            <Button type="submit">Пошук</Button>
-          </form>
+      <section className="content-grid">
+        <div className="panel">
+          <PanelHeader title="Список страв" meta={`${recipes?.metadata.totalItems ?? 0} всього`} />
+
+          <div className="toolbar">
+            <TextInput value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Пошук рецептів у реальному часі за назвою..." />
+          </div>
 
           {loading ? <ListSkeleton rows={5} /> : null}
 
@@ -300,6 +140,19 @@ export function RecipesPage({ onNavigate, onMessage }: PageProps) {
               setPage(1);
             }}
           />
+        </div>
+
+        <div className="panel-stack">
+          <section className="panel">
+            <PanelHeader title="Наступний крок" meta="Творчість" />
+
+            <p className="support-copy">
+              Почніть створювати новий кулінарний рецепт, а на наступному кроці ви зможете додати інгредієнти та їх точну кількість.
+            </p>
+            <Button variant="primary" type="button" onClick={() => onNavigate('/recipes/new')}>
+              Написати рецепт
+            </Button>
+          </section>
         </div>
       </section>
     </>
@@ -467,6 +320,7 @@ export function RecipeCreatePage({ onNavigate, onMessage }: PageProps) {
       const created = await createRecipe({
         name: name.trim(),
         text: text.trim(),
+        authorId: sessionUser.id,
       });
 
       // 2. Attach ingredients sequentially
@@ -614,7 +468,7 @@ export function RecipeCreatePage({ onNavigate, onMessage }: PageProps) {
                 <TextInput
                   type="number"
                   min="0.000001"
-                  step="any"
+                  step="0.01"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="Кількість..."
@@ -738,12 +592,8 @@ export function RecipeCreatePage({ onNavigate, onMessage }: PageProps) {
 }
 
 export function RecipeDetailPage({ id, onNavigate, onMessage }: PageProps & { id: number }) {
-  const { sessionUser } = useAuth();
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [recipeIngredients, setRecipeIngredients] = useState<RecipeIngredient[]>([]);
-  const [comments, setComments] = useState<Comment[]>([]);
-  const [commentText, setCommentText] = useState('');
-  const [submittingComment, setSubmittingComment] = useState(false);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -758,15 +608,13 @@ export function RecipeDetailPage({ id, onNavigate, onMessage }: PageProps & { id
     onMessage('error', null);
 
     try {
-      const [recipeData, recipeIngredientData, commentData] = await Promise.all([
+      const [recipeData, recipeIngredientData] = await Promise.all([
         getRecipe(id),
         getRecipeIngredients({ page: 1, perPage: 200, recipeId: id }),
-        getRecipeComments(id),
       ]);
 
       setRecipe(recipeData);
       setRecipeIngredients(recipeIngredientData.items);
-      setComments(commentData);
     } catch (error) {
       onMessage('error', await readApiError(error));
     } finally {
@@ -794,38 +642,6 @@ export function RecipeDetailPage({ id, onNavigate, onMessage }: PageProps & { id
       onMessage('error', await readApiError(error));
     } finally {
       setDeleting(false);
-    }
-  }
-
-  async function handlePostComment(e: React.FormEvent) {
-    e.preventDefault();
-    if (!commentText.trim() || !sessionUser?.id) return;
-
-    setSubmittingComment(true);
-    onMessage('error', null);
-
-    try {
-      const newComment = await createComment(id, {
-        text: commentText.trim(),
-      });
-      setComments((prev) => [newComment, ...prev]);
-      setCommentText('');
-      onMessage('success', 'Коментар додано.');
-    } catch (error) {
-      onMessage('error', await readApiError(error));
-    } finally {
-      setSubmittingComment(false);
-    }
-  }
-
-  async function handleDeleteComment(commentId: number) {
-    onMessage('error', null);
-    try {
-      await deleteComment(commentId);
-      setComments((prev) => prev.filter((c) => c.id !== commentId));
-      onMessage('success', 'Коментар видалено.');
-    } catch (error) {
-      onMessage('error', await readApiError(error));
     }
   }
 
@@ -865,7 +681,7 @@ export function RecipeDetailPage({ id, onNavigate, onMessage }: PageProps & { id
   }, [recipe?.text]);
 
   return (
-    <section className="content-single" style={{ maxWidth: '960px', width: '100%', margin: '0 auto' }}>
+    <section className="content-single">
       <PageHeader
         eyebrow="Рецепти"
         title={recipe?.name ?? 'Деталі рецепта'}
@@ -879,66 +695,22 @@ export function RecipeDetailPage({ id, onNavigate, onMessage }: PageProps & { id
         }
       />
 
-      {loading ? (
-        <section className="panel">
-          <PanelHeader title="Огляд рецепта" meta="Завантаження..." />
-          <DetailSkeleton cards={4} sections={2} />
-        </section>
-      ) : null}
+      <section className="panel">
+        <PanelHeader title="Огляд рецепта" meta={recipe ? `#${recipe.id}` : 'Завантаження...'} />
 
-      {recipe ? (
-        <div style={{ display: 'grid', gap: '1.5rem', width: '100%' }}>
-          
-          {/* Metadata Card */}
-          <section className="panel">
-            <PanelHeader title="Огляд рецепта" meta={`#${recipe.id}`} />
+        {loading ? <DetailSkeleton cards={4} sections={2} /> : null}
+
+        {recipe ? (
+          <>
             <DetailGrid>
               <DetailCard label="Назва" value={recipe.name} />
-              <DetailCard
-                label="Автор"
-                value={
-                  <a
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      onNavigate(`/users/${recipe.authorId}`);
-                    }}
-                    style={{
-                      color: 'var(--primary-accent)',
-                      textDecoration: 'none',
-                      borderBottom: '1px dashed var(--fg-muted)',
-                      paddingBottom: '2px',
-                      transition: 'all 0.2s',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '0.25rem'
-                    }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.color = 'var(--primary-accent-hover)';
-                      e.currentTarget.style.borderBottomColor = 'var(--primary-accent-hover)';
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.color = 'var(--primary-accent)';
-                      e.currentTarget.style.borderBottomColor = 'var(--fg-muted)';
-                    }}
-                    title="Перейти до профілю автора"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ transform: 'translateY(-0.5px)' }}>
-                      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
-                      <circle cx="12" cy="7" r="4"/>
-                    </svg>
-                    {recipe.author?.name ?? `Користувач #${recipe.authorId}`}
-                  </a>
-                }
-              />
+              <DetailCard label="Автор" value={recipe.author?.name ?? `Користувач #${recipe.authorId}`} />
               <DetailCard label="Створено" value={formatDate(recipe.createdAt)} />
               <DetailCard label="Оновлено" value={formatDate(recipe.updatedAt)} />
             </DetailGrid>
-          </section>
 
-          {/* Cooking Mode Toggle Switch */}
-          <section className="panel" style={{ padding: '1.25rem' }}>
-            <div className="cooking-toggle-container" style={{ margin: 0, border: 'none', background: 'transparent', padding: 0, width: '100%', display: 'flex', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: '1rem' }}>
+            {/* Cooking Mode Toggle Switch */}
+            <div className="cooking-toggle-container">
               <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', userSelect: 'none' }}>
                 <input
                   type="checkbox"
@@ -946,270 +718,131 @@ export function RecipeDetailPage({ id, onNavigate, onMessage }: PageProps & { id
                   onChange={(e) => setCookingMode(e.target.checked)}
                   style={{ width: '1.25rem', height: '1.25rem', accentColor: 'var(--primary-accent)', cursor: 'pointer' }}
                 />
-                <span style={{ fontWeight: 600, color: 'var(--primary-accent)', fontSize: '1rem' }}>
+                <span style={{ fontWeight: 600, color: 'var(--primary-accent)' }}>
                   {cookingMode ? 'Режим приготування активний' : 'Активувати режим приготування'}
                 </span>
               </label>
-              <span style={{ fontSize: '0.85rem', color: 'var(--fg-muted)' }}>
+              <span style={{ fontSize: '0.8rem', color: '#aaa' }}>
                 (Відмічайте готові кроки та інгредієнти під час готування!)
               </span>
             </div>
-          </section>
 
-          {/* Split Grid for ingredients vs steps */}
-          <div className={`recipe-split-grid ${cookingMode ? 'cooking-mode-list' : ''}`}>
-            
-            {/* Ingredients Column */}
-            <div className="panel" style={{ minHeight: 'auto', padding: '1.5rem' }}>
-              <PanelHeader title="Список інгредієнтів" meta={`${recipeIngredients.length} одиниць`} />
-              {recipeIngredients.length ? (
-                <ContentList>
-                  {recipeIngredients.map((item) => {
-                    const isChecked = checkedIngredients.has(item.id);
-                    return (
-                      <div
-                        key={item.id}
-                        onClick={() => toggleIngredientCheck(item.id)}
-                        className={`list-item ${isChecked ? 'item-checked' : ''}`}
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          cursor: cookingMode ? 'pointer' : 'default',
-                          padding: '0.85rem 1rem',
-                          borderLeft: cookingMode && !isChecked ? '3px solid var(--secondary-accent)' : 'none'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          {cookingMode && (
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              readOnly
-                              style={{ width: '1.1rem', height: '1.1rem', accentColor: 'var(--primary-accent)', cursor: 'pointer' }}
-                            />
-                          )}
-                          {cookingMode ? (
-                            <strong style={{ color: isChecked ? 'var(--fg-muted)' : 'var(--fg-app)' }}>
+            {/* Split Grid for ingredients vs steps */}
+            <div className={`content-grid ${cookingMode ? 'cooking-mode-list' : ''}`} style={{ gridTemplateColumns: 'minmax(300px, 0.4fr) minmax(400px, 0.6fr)', gap: '2rem', marginTop: '1.5rem' }}>
+              
+              {/* Ingredients Column */}
+              <div className="panel" style={{ minHeight: 'auto', padding: '1.25rem' }}>
+                <PanelHeader title="Список інгредієнтів" meta={`${recipeIngredients.length} одиниць`} />
+                {recipeIngredients.length ? (
+                  <ContentList>
+                    {recipeIngredients.map((item) => {
+                      const isChecked = checkedIngredients.has(item.id);
+                      return (
+                        <div
+                          key={item.id}
+                          onClick={() => toggleIngredientCheck(item.id)}
+                          className={`list-item ${isChecked ? 'item-checked' : ''}`}
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            cursor: cookingMode ? 'pointer' : 'default',
+                            padding: '0.85rem 1rem',
+                            borderLeft: cookingMode && !isChecked ? '3px solid var(--secondary-accent)' : 'none'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            {cookingMode && (
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                readOnly
+                                style={{ width: '1.1rem', height: '1.1rem', accentColor: 'var(--primary-accent)', cursor: 'pointer' }}
+                              />
+                            )}
+                            <strong style={{ color: isChecked ? '#666' : '#fff' }}>
                               {item.ingredient?.name ?? `Інгредієнт #${item.ingredientId}`}
                             </strong>
-                          ) : (
-                            <strong style={{ color: 'var(--fg-app)' }}>
-                              <a
-                                href="#"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  onNavigate(`/ingredients/${item.ingredientId}`);
-                                }}
-                                style={{
-                                  color: 'var(--fg-app)',
-                                  textDecoration: 'none',
-                                  borderBottom: '1px dashed var(--fg-muted)',
-                                  paddingBottom: '1px',
-                                  transition: 'all 0.2s',
-                                  cursor: 'pointer'
-                                }}
-                                onMouseOver={(e) => {
-                                  e.currentTarget.style.color = 'var(--primary-accent-hover)';
-                                  e.currentTarget.style.borderBottomColor = 'var(--primary-accent-hover)';
-                                }}
-                                onMouseOut={(e) => {
-                                  e.currentTarget.style.color = 'var(--fg-app)';
-                                  e.currentTarget.style.borderBottomColor = 'var(--fg-muted)';
-                                }}
-                                title="Переглянути деталі інгредієнта"
-                              >
-                                {item.ingredient?.name ?? `Інгредієнт #${item.ingredientId}`}
-                              </a>
-                            </strong>
-                          )}
-                        </div>
-                        <span style={{ color: isChecked ? 'var(--fg-muted)' : 'var(--primary-accent)', fontWeight: 500 }}>
-                          {item.amount} {item.unit}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </ContentList>
-              ) : (
-                <EmptyState>Інгредієнти ще не додані.</EmptyState>
-              )}
-            </div>
-
-            {/* Instructions Column */}
-            <div className="panel" style={{ minHeight: 'auto', padding: '1.5rem' }}>
-              <PanelHeader title="Покрокова інструкція" meta={`${steps.length} кроків`} />
-              {steps.length ? (
-                <ContentList>
-                  {steps.map((step, idx) => {
-                    const isChecked = checkedSteps.has(idx);
-                    return (
-                      <div
-                        key={idx}
-                        onClick={() => toggleStepCheck(idx)}
-                        className={`list-item ${isChecked ? 'item-checked' : ''}`}
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '0.5rem',
-                          cursor: cookingMode ? 'pointer' : 'default',
-                          padding: '1rem',
-                          borderLeft: cookingMode && !isChecked ? '3px solid var(--primary-accent)' : 'none'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          {cookingMode && (
-                            <input
-                              type="checkbox"
-                              checked={isChecked}
-                              readOnly
-                              style={{ width: '1.1rem', height: '1.1rem', accentColor: 'var(--primary-accent)', cursor: 'pointer' }}
-                            />
-                          )}
-                          <span style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: '1.6rem',
-                            height: '1.6rem',
-                            borderRadius: '50%',
-                            background: isChecked ? '#222' : 'rgba(255, 255, 255, 0.08)',
-                            color: isChecked ? '#666' : '#fff',
-                            fontSize: '0.8rem',
-                            fontWeight: 'bold'
-                          }}>
-                            {idx + 1}
-                          </span>
-                        </div>
-                        <p style={{ margin: 0, paddingLeft: cookingMode ? '2rem' : '0', color: isChecked ? 'var(--fg-muted)' : 'var(--fg-app)', lineHeight: '1.6', fontSize: '0.98rem' }}>
-                          {step}
-                        </p>
-                      </div>
-                    );
-                  })}
-                </ContentList>
-              ) : (
-                <EmptyState>Інструкції відсутні.</EmptyState>
-              )}
-            </div>
-
-          </div>
-
-          <section className="panel" style={{ padding: '1.5rem', display: 'grid', gap: '1.25rem' }}>
-            <PanelHeader title="Коментарі спільноти" meta={`${comments.length} відгуків`} />
-
-            <form onSubmit={handlePostComment} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <TextArea
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                placeholder="Поділіться своїми враженнями від приготування страви..."
-                rows={3}
-                disabled={submittingComment}
-                style={{ width: '100%' }}
-              />
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button type="submit" variant="primary" disabled={submittingComment || !commentText.trim()}>
-                  {submittingComment ? 'Надсилання...' : 'Опублікувати коментар'}
-                </Button>
-              </div>
-            </form>
-
-            {comments.length ? (
-              <ContentList>
-                {comments.map((comment) => {
-                  const authorName = comment.author?.name || `Користувач #${comment.authorId}`;
-                  const authorInitials = authorName.charAt(0).toUpperCase();
-                  const isAuthor = comment.authorId === sessionUser?.id;
-
-                  return (
-                    <div
-                      key={comment.id}
-                      className="list-item"
-                      style={{
-                        display: 'flex',
-                        gap: '1rem',
-                        padding: '1.25rem',
-                        background: 'rgba(255, 255, 255, 0.01)',
-                        border: '1px solid var(--sidebar-border)',
-                        borderRadius: '8px',
-                        alignItems: 'flex-start'
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: '2.5rem',
-                          height: '2.5rem',
-                          borderRadius: '50%',
-                          background: 'linear-gradient(135deg, var(--primary-accent), var(--secondary-accent))',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: 'bold',
-                          color: '#000',
-                          fontSize: '1rem',
-                          flexShrink: 0
-                        }}
-                      >
-                        {authorInitials}
-                      </div>
-
-                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-                          <span style={{ fontWeight: 600, color: 'var(--fg-app)' }}>
-                            {authorName}
-                          </span>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                            <span style={{ fontSize: '0.8rem', color: 'var(--fg-muted)' }}>
-                              {formatDate(comment.createdAt)}
-                            </span>
-                            {isAuthor && (
-                              <button
-                                type="button"
-                                onClick={() => void handleDeleteComment(comment.id)}
-                                style={{
-                                  background: 'transparent',
-                                  border: 'none',
-                                  color: '#ff6b6b',
-                                  cursor: 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  padding: '0.2rem',
-                                  opacity: 0.8,
-                                  transition: 'opacity 0.2s'
-                                }}
-                                title="Видалити коментар"
-                              >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                  <line x1="18" y1="6" x2="6" y2="18"/>
-                                  <line x1="6" y1="6" x2="18" y2="18"/>
-                                </svg>
-                              </button>
-                            )}
                           </div>
+                          <span style={{ color: isChecked ? '#555' : 'var(--primary-accent)', fontWeight: 500 }}>
+                            {item.amount} {item.unit}
+                          </span>
                         </div>
-                        <p style={{ margin: 0, fontSize: '0.94rem', color: 'var(--fg-app)', opacity: 0.95, lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
-                          {comment.text}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </ContentList>
-            ) : (
-              <EmptyState>Коментарів до цього рецепта ще немає. Будьте першим, хто поділиться своєю думкою!</EmptyState>
-            )}
-          </section>
+                      );
+                    })}
+                  </ContentList>
+                ) : (
+                  <EmptyState>Інгредієнти ще не додані.</EmptyState>
+                )}
+              </div>
 
-          {/* Actions Bar */}
-          <div className="inline-actions" style={{ marginTop: '0.5rem' }}>
-            <Button type="button" variant="danger" onClick={() => setConfirmDeleteOpen(true)} disabled={deleting}>
-              {deleting ? 'Видалення...' : 'Видалити рецепт'}
-            </Button>
-          </div>
-          
-        </div>
-      ) : null}
+              {/* Instructions Column */}
+              <div className="panel" style={{ minHeight: 'auto', padding: '1.25rem' }}>
+                <PanelHeader title="Покрокова інструкція" meta={`${steps.length} кроків`} />
+                {steps.length ? (
+                  <ContentList>
+                    {steps.map((step, idx) => {
+                      const isChecked = checkedSteps.has(idx);
+                      return (
+                        <div
+                          key={idx}
+                          onClick={() => toggleStepCheck(idx)}
+                          className={`list-item ${isChecked ? 'item-checked' : ''}`}
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.5rem',
+                            cursor: cookingMode ? 'pointer' : 'default',
+                            padding: '1rem',
+                            borderLeft: cookingMode && !isChecked ? '3px solid var(--primary-accent)' : 'none'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            {cookingMode && (
+                              <input
+                                type="checkbox"
+                                checked={isChecked}
+                                readOnly
+                                style={{ width: '1.1rem', height: '1.1rem', accentColor: 'var(--primary-accent)', cursor: 'pointer' }}
+                              />
+                            )}
+                            <span style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              width: '1.6rem',
+                              height: '1.6rem',
+                              borderRadius: '50%',
+                              background: isChecked ? '#222' : 'rgba(255, 255, 255, 0.08)',
+                              color: isChecked ? '#666' : '#fff',
+                              fontSize: '0.8rem',
+                              fontWeight: 'bold'
+                            }}>
+                              {idx + 1}
+                            </span>
+                          </div>
+                          <p style={{ margin: 0, paddingLeft: cookingMode ? '2rem' : '0', color: isChecked ? '#777' : '#eee', lineHeight: '1.6', fontSize: '0.98rem' }}>
+                            {step}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </ContentList>
+                ) : (
+                  <EmptyState>Інструкції відсутні.</EmptyState>
+                )}
+              </div>
+
+            </div>
+
+            <div className="inline-actions" style={{ marginTop: '2rem' }}>
+              <Button type="button" variant="danger" onClick={() => setConfirmDeleteOpen(true)} disabled={deleting}>
+                {deleting ? 'Видалення...' : 'Видалити рецепт'}
+              </Button>
+            </div>
+          </>
+        ) : null}
+      </section>
 
       <ConfirmModal
         open={confirmDeleteOpen}
@@ -1612,7 +1245,7 @@ export function RecipeIngredientsPage({ id, onNavigate, onMessage }: PageProps &
             </Field>
 
             <Field label="Кількість">
-              <TextInput value={createAmount} onChange={(event) => setCreateAmount(event.target.value)} type="number" min="0.000001" step="any" required />
+              <TextInput value={createAmount} onChange={(event) => setCreateAmount(event.target.value)} type="number" min="0.000001" step="0.01" required />
             </Field>
 
             <Field label="Одиниця виміру">
@@ -1676,7 +1309,7 @@ export function RecipeIngredientsPage({ id, onNavigate, onMessage }: PageProps &
                 onChange={(event) => setEditAmount(event.target.value)}
                 type="number"
                 min="0.000001"
-                step="any"
+                step="0.01"
                 disabled={!selectedItem}
                 required
               />

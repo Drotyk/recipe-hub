@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 
 export type Route =
   | { name: 'auth' }
-  | { name: 'dashboard' }
   | { name: 'recipes' }
   | { name: 'recipe-new' }
   | { name: 'recipe-detail'; id: number }
@@ -12,27 +11,15 @@ export type Route =
   | { name: 'ingredient-detail'; id: number }
   | { name: 'users' }
   | { name: 'user-detail'; id: number }
-  | { name: 'profile' }
-  | { name: 'about' }
-  | { name: 'support' }
-  | { name: 'settings' }
-  | { name: 'notifications' };
+  | { name: 'profile' };
 
-/**
- * @ai-context У проєкті немає react-router; це єдине місце, де URL перетворюється на route state.
- * При додаванні сторінки онови `Route`, `parseRoute`, `getNavKey` і switch у `App.tsx`.
- */
 export function parseRoute(pathname: string): Route {
   if (pathname === '/' || pathname === '') {
-    return { name: 'dashboard' };
+    return { name: 'recipes' };
   }
 
   if (pathname === '/auth') {
     return { name: 'auth' };
-  }
-
-  if (pathname === '/dashboard') {
-    return { name: 'dashboard' };
   }
 
   if (pathname === '/recipes') {
@@ -76,24 +63,8 @@ export function parseRoute(pathname: string): Route {
     return { name: 'user-detail', id: Number(userDetailMatch[1]) };
   }
 
-  if (pathname === '/about') {
-    return { name: 'about' };
-  }
-
-  if (pathname === '/support') {
-    return { name: 'support' };
-  }
-
   if (pathname === '/profile') {
     return { name: 'profile' };
-  }
-
-  if (pathname === '/settings') {
-    return { name: 'settings' };
-  }
-
-  if (pathname === '/notifications') {
-    return { name: 'notifications' };
   }
 
   return { name: 'recipes' };
@@ -112,22 +83,18 @@ export function useRoute() {
   const route = useMemo(() => parseRoute(pathname), [pathname]);
 
   function navigate(path: string) {
-    if (path === `${window.location.pathname}${window.location.search}`) {
+    if (path === window.location.pathname) {
       return;
     }
 
     window.history.pushState({}, '', path);
-    setPathname(window.location.pathname);
+    setPathname(path);
   }
 
   return { route, navigate };
 }
 
 export function getNavKey(route: Route) {
-  if (route.name === 'dashboard') {
-    return 'dashboard';
-  }
-
   if (route.name === 'ingredients' || route.name === 'ingredient-detail') {
     return 'ingredients';
   }
@@ -138,22 +105,6 @@ export function getNavKey(route: Route) {
 
   if (route.name === 'profile') {
     return 'profile';
-  }
-
-  if (route.name === 'about') {
-    return 'about';
-  }
-
-  if (route.name === 'support') {
-    return 'support';
-  }
-
-  if (route.name === 'settings') {
-    return 'settings';
-  }
-
-  if (route.name === 'notifications') {
-    return 'notifications';
   }
 
   return 'recipes';

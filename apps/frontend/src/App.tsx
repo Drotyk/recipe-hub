@@ -8,7 +8,6 @@ import { AuthPage } from './pages/auth-page';
 import { IngredientDetailPage, IngredientsPage } from './pages/ingredients-pages';
 import { ProfilePage } from './pages/profile-page';
 import {
-  DashboardPage,
   RecipeCreatePage,
   RecipeDetailPage,
   RecipeEditPage,
@@ -16,18 +15,11 @@ import {
   RecipesPage,
 } from './pages/recipes-pages';
 import { UserDetailPage, UsersPage } from './pages/users-pages';
-import { AboutPage, SupportPage } from './pages/info-pages';
-import { SettingsPage, NotificationsPage } from './pages/settings-notifications-pages';
 
 export default function App() {
   const { accessToken, sessionUser, logout } = useAuth();
   const { route, navigate } = useRoute();
   const [toasts, setToasts] = useState<ToastItem[]>([]);
-  /**
-   * @ai-context Це frontend-only список сторінок, доступних без accessToken.
-   * Він не відкриває backend endpoints; backend public/private контролюється `@Public()`.
-   */
-  const isPublicRoute = ['auth', 'about', 'support', 'recipes', 'ingredients'].includes(route.name);
 
   function handleMessage(type: 'error' | 'success', text: string | null) {
     if (!text) {
@@ -48,15 +40,15 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (!accessToken && !isPublicRoute) {
+    if (!accessToken && route.name !== 'auth') {
       navigate('/auth');
       return;
     }
 
     if (accessToken && route.name === 'auth') {
-      navigate('/dashboard');
+      navigate('/recipes');
     }
-  }, [accessToken, isPublicRoute, route.name]);
+  }, [accessToken, route.name]);
 
   useEffect(() => {
     if (!toasts.length) {
@@ -74,56 +66,7 @@ export default function App() {
     };
   }, [toasts]);
 
-  if (!accessToken) {
-    if (route.name === 'about') {
-      return (
-        <>
-          <ToastStack items={toasts} onDismiss={dismissToast} />
-          <AboutPage onNavigate={navigate} onMessage={handleMessage} />
-        </>
-      );
-    }
-    
-    if (route.name === 'support') {
-      return (
-        <>
-          <ToastStack items={toasts} onDismiss={dismissToast} />
-          <SupportPage onNavigate={navigate} onMessage={handleMessage} />
-        </>
-      );
-    }
-
-    if (route.name === 'recipes') {
-      return (
-        <>
-          <ToastStack items={toasts} onDismiss={dismissToast} />
-          <Shell route={route} sessionUser={sessionUser} onLogout={logout} onNavigate={navigate}>
-            <RecipesPage onNavigate={navigate} onMessage={handleMessage} />
-          </Shell>
-        </>
-      );
-    }
-
-    if (route.name === 'ingredients') {
-      return (
-        <>
-          <ToastStack items={toasts} onDismiss={dismissToast} />
-          <Shell route={route} sessionUser={sessionUser} onLogout={logout} onNavigate={navigate}>
-            <IngredientsPage onNavigate={navigate} onMessage={handleMessage} />
-          </Shell>
-        </>
-      );
-    }
-
-    return (
-      <>
-        <ToastStack items={toasts} onDismiss={dismissToast} />
-        <AuthPage onNavigate={navigate} onMessage={handleMessage} />
-      </>
-    );
-  }
-
-  if (route.name === 'auth') {
+  if (!accessToken || route.name === 'auth') {
     return (
       <>
         <ToastStack items={toasts} onDismiss={dismissToast} />
@@ -135,9 +78,6 @@ export default function App() {
   let page: React.ReactNode;
 
   switch (route.name) {
-    case 'dashboard':
-      page = <DashboardPage onNavigate={navigate} onMessage={handleMessage} />;
-      break;
     case 'recipes':
       page = <RecipesPage onNavigate={navigate} onMessage={handleMessage} />;
       break;
@@ -168,20 +108,8 @@ export default function App() {
     case 'profile':
       page = <ProfilePage onNavigate={navigate} onMessage={handleMessage} />;
       break;
-    case 'about':
-      page = <AboutPage onNavigate={navigate} onMessage={handleMessage} />;
-      break;
-    case 'support':
-      page = <SupportPage onNavigate={navigate} onMessage={handleMessage} />;
-      break;
-    case 'settings':
-      page = <SettingsPage onNavigate={navigate} onMessage={handleMessage} />;
-      break;
-    case 'notifications':
-      page = <NotificationsPage onNavigate={navigate} onMessage={handleMessage} />;
-      break;
     default:
-      page = <DashboardPage onNavigate={navigate} onMessage={handleMessage} />;
+      page = <RecipesPage onNavigate={navigate} onMessage={handleMessage} />;
       break;
   }
 

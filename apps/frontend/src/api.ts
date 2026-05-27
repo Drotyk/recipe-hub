@@ -21,8 +21,6 @@ export type User = {
   id: number;
   name: string;
   email: string;
-  bio?: string;
-  social?: string;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
@@ -43,18 +41,6 @@ export type Recipe = {
   authorId: number;
   author?: User | null;
   recipeIngredients?: RecipeIngredient[] | null;
-  createdAt: string;
-  updatedAt: string;
-  deletedAt: string | null;
-};
-
-export type Comment = {
-  id: number;
-  text: string;
-  recipeId: number;
-  recipe?: Recipe | null;
-  authorId: number;
-  author?: User | null;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
@@ -81,11 +67,6 @@ export type CollectionQuery = {
   ingredientId?: number;
 };
 
-/**
- * @ai-context Єдина точка HTTP-запитів frontend до backend.
- * Автоматично додає Bearer token з localStorage і кидає Response для `readApiError`.
- * Якщо змінюється auth storage або base URL, починай з цього helper.
- */
 export async function apiFetch<T>(path: string, opts: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem('accessToken');
   const headers: Record<string, string> = {
@@ -143,10 +124,6 @@ export async function readApiError(error: unknown) {
   return 'Request failed';
 }
 
-/**
- * @ai-context Формує query для backend collection endpoints.
- * Backend очікує `page`, `perPage`, optional `search`, а recipe ingredients також `recipeId`/`ingredientId`.
- */
 function buildCollectionQuery({ page = 1, perPage = 12, search = '', recipeId, ingredientId }: CollectionQuery) {
   const query = new URLSearchParams({
     page: String(page),
@@ -210,7 +187,7 @@ export function deleteIngredient(id: number) {
   });
 }
 
-export function createRecipe(input: { name: string; text: string }) {
+export function createRecipe(input: { name: string; text: string; authorId: number }) {
   return apiFetch<Recipe>('/recipe', {
     method: 'POST',
     body: JSON.stringify(input),
@@ -232,34 +209,6 @@ export function deleteRecipe(id: number) {
 
 export function getUser(id: number) {
   return apiFetch<User>(`/user/${id}`);
-}
-
-export function updateUser(id: number, input: { name?: string; bio?: string; social?: string }) {
-  return apiFetch<User>(`/user/${id}`, {
-    method: 'PATCH',
-    body: JSON.stringify(input),
-  });
-}
-
-export function getRecipeComments(recipeId: number) {
-  return apiFetch<Comment[]>(`/recipe/${recipeId}/comments`);
-}
-
-export function getUserComments(userId: number) {
-  return apiFetch<Comment[]>(`/user/${userId}/comments`);
-}
-
-export function createComment(recipeId: number, input: { text: string }) {
-  return apiFetch<Comment>(`/recipe/${recipeId}/comments`, {
-    method: 'POST',
-    body: JSON.stringify(input),
-  });
-}
-
-export function deleteComment(id: number) {
-  return apiFetch<Comment>(`/comment/${id}`, {
-    method: 'DELETE',
-  });
 }
 
 export function getRecipeIngredients(query: CollectionQuery = {}) {

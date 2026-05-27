@@ -20,16 +20,11 @@ type AuthContextType = {
   sessionUser: SessionUser | null;
   login: (email: string, password: string) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
-  acceptTokens: (tokens: SessionTokens) => void;
   logout: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-/**
- * @ai-context Frontend не перевіряє підпис JWT, а лише читає payload для UI state.
- * Довіру до користувача і прав має забезпечувати backend guard/service layer.
- */
 function decodeToken(accessToken: string | null) {
   if (!accessToken) {
     return null;
@@ -67,10 +62,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const sessionUser = useMemo(() => decodeToken(accessToken), [accessToken]);
 
-  /**
-   * @ai-context Access token керує auth state React, refresh token тільки зберігається.
-   * Якщо буде доданий refresh flow, його треба підключати тут і в `apiFetch`.
-   */
   function storeTokens(tokens: SessionTokens) {
     setAccessToken(tokens.accessToken ?? null);
     localStorage.setItem('refreshToken', tokens.refreshToken ?? '');
@@ -97,7 +88,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => setAccessToken(null);
 
   return (
-    <AuthContext.Provider value={{ accessToken, sessionUser, login, register, acceptTokens: storeTokens, logout }}>
+    <AuthContext.Provider value={{ accessToken, sessionUser, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
