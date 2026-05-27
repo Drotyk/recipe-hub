@@ -14,7 +14,12 @@ import { plainToInstance } from 'class-transformer';
 
 import { IngredientService } from '@/src/business-logic';
 import { CollectionOptionsDto } from '@/src/domains/view-models/collection';
-import { CreateIngredientDto, UpdateIngredientDto, ViewIngredientDto } from '@/src/domains/view-models/ingredient';
+import {
+    CollectionIngredientDto,
+    CreateIngredientDto,
+    UpdateIngredientDto,
+    ViewIngredientDto,
+} from '@/src/domains/view-models/ingredient';
 
 
 @ApiTags('Ingredient')
@@ -23,11 +28,11 @@ export class IngredientController {
     constructor(private readonly ingredientService: IngredientService) {}
 
     @Get('collection')
-    @ApiOkResponse({ type: ViewIngredientDto })
+    @ApiOkResponse({ type: CollectionIngredientDto })
   async getCollection(@Query() collectionOptions: CollectionOptionsDto) {
         const data = await this.ingredientService.getIngredientCollection(collectionOptions);
 
-        return plainToInstance(ViewIngredientDto, data);
+        return plainToInstance(CollectionIngredientDto, data);
     }
 
     @Get(':id')

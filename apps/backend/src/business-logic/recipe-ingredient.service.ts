@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { ILike } from 'typeorm';
+import { FindOptionsWhere, ILike } from 'typeorm';
 
 import { IngredientEntity, RecipeEntity } from '@/src/domains/entities';
 import { CollectionMetadata, CollectionOptionsDto } from '@/src/domains/view-models/collection';
@@ -14,6 +14,7 @@ export class RecipeIngredientService {
     getOneById(id: number) {
         return this.recipeIngredientsRepository.findOne({
             where: { id },
+            relations: ['recipe', 'ingredient'],
         });
     }
 
@@ -30,13 +31,23 @@ export class RecipeIngredientService {
     }
 
     async getRecipeIngredientCollection(collectionOptions: CollectionOptionsDto){
+        const baseFilter: FindOptionsWhere<any> = {};
+
+        if (collectionOptions.recipeId) {
+            baseFilter.recipeId = collectionOptions.recipeId;
+        }
+
+        if (collectionOptions.ingredientId) {
+            baseFilter.ingredientId = collectionOptions.ingredientId;
+        }
+
         const whereOptions =
             collectionOptions?.search
              ? [
-                 { recipe: { name: ILike(`%${collectionOptions?.search}%`) } },
-                 { ingredient: { name: ILike(`%${collectionOptions?.search}%`) } },
+                 { ...baseFilter, recipe: { name: ILike(`%${collectionOptions?.search}%`) } },
+                 { ...baseFilter, ingredient: { name: ILike(`%${collectionOptions?.search}%`) } },
                 ]
-             : {};
+             : baseFilter;
 
         const [items, count] = await this.recipeIngredientsRepository.findAndCount({
             where: whereOptions,
@@ -50,7 +61,7 @@ export class RecipeIngredientService {
             metadata: {
                 page: collectionOptions.page,
                 perPage: items.length,
-                totalPages: Math.ceil(count / items.length),
+                totalPages: Math.ceil(count / collectionOptions.perPage),
                 totalItems: count,
             } as CollectionMetadata,
         }
