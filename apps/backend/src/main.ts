@@ -10,6 +10,7 @@ async function bootstrap() {
     const logger = new Logger('Bootstrap');
 
     const app = await NestFactory.create(AppModule);
+    app.enableCors();
 
     const configSwagger = new DocumentBuilder()
         .setTitle('Algoritm-lab')

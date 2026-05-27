@@ -9,7 +9,7 @@
     "docker:down": "docker compose --env-file ./.env -f ./docker-compose.yml down --remove-orphans",
     "install:root": "pnpm install",
     "frontend:build": "pnpm --filter @algoritm-lab/frontend run build",
-    "frontend:start": "pnpm --filter @algoritm-lab/frontend run dev",
+    "frontend:start": "pnpm --filter @algoritm-lab/frontend run start:dev",
     "backend:build": "pnpm --filter @algoritm-lab/backend run build",
     "backend:lint": "pnpm --filter @algoritm-lab/backend run lint",
     "backend:start": "pnpm --filter @algoritm-lab/backend run start",

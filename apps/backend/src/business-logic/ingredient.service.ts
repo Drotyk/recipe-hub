@@ -60,6 +60,8 @@ export class IngredientService {
             });
         }
 
-        return this.ingredientRepository.save(existingIngredient);
+        const createdIngredient = this.ingredientRepository.create(createIngredientDto);
+
+        return this.ingredientRepository.save(createdIngredient);
     }
 }

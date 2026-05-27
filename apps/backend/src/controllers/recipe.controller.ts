@@ -14,8 +14,7 @@ import { plainToInstance } from 'class-transformer';
 
 import { RecipeService } from '@/src/business-logic';
 import { CollectionOptionsDto } from '@/src/domains/view-models/collection';
-import { CreateRecipeDto, UpdateRecipeDto, ViewRecipeDto } from '@/src/domains/view-models/recipe';
-import { ViewUserDto } from '@/src/domains/view-models/user';
+import { CollectionRecipeDto, CreateRecipeDto, UpdateRecipeDto, ViewRecipeDto } from '@/src/domains/view-models/recipe';
 
 
 @ApiTags('Recipe')
@@ -24,11 +23,11 @@ export class RecipeController {
     constructor(private readonly recipeService: RecipeService) {}
 
     @Get('collection')
-    @ApiOkResponse({ type: ViewUserDto })
+    @ApiOkResponse({ type: CollectionRecipeDto })
     async getCollection(@Query() collectionOptions: CollectionOptionsDto) {
         const data = await this.recipeService.getRecipeCollection(collectionOptions);
 
-        return plainToInstance(ViewRecipeDto, data);
+        return plainToInstance(CollectionRecipeDto, data);
     }
 
     @Get(':id')

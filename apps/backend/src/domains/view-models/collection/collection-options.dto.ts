@@ -24,4 +24,20 @@ export class CollectionOptionsDto {
     @IsOptional()
     @ApiPropertyOptional()
     search?: string;
+
+    @Expose()
+    @IsOptional()
+    @Min(1)
+    @IsNumber({ allowNaN: false, allowInfinity: false })
+    @Type(() => Number)
+    @ApiPropertyOptional()
+    recipeId?: number;
+
+    @Expose()
+    @IsOptional()
+    @Min(1)
+    @IsNumber({ allowNaN: false, allowInfinity: false })
+    @Type(() => Number)
+    @ApiPropertyOptional()
+    ingredientId?: number;
 }

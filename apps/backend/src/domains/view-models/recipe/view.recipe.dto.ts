@@ -17,7 +17,7 @@ export class ViewRecipeDto {
 
     @Expose()
     @ApiProperty()
-    author_id: string;
+    authorId: number;
 
     @Expose()
     @Type(() => ViewUserDto)
