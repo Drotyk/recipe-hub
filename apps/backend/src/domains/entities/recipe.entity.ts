@@ -4,6 +4,7 @@ import {
 } from 'typeorm';
 
 import { AbstractEntity } from '@/src/domains/entities/__abstract.entity';
+import { CommentEntity } from '@/src/domains/entities/comment.entity';
 import { RecipeIngredientsEntity } from '@/src/domains/entities/recipe-ingredients.entity';
 import { UserEntity } from '@/src/domains/entities/user.entity';
 
@@ -28,4 +29,10 @@ export class RecipeEntity extends AbstractEntity {
         (recipeIngredient) => recipeIngredient.recipeId,
     )
     recipeIngredients: RecipeIngredientsEntity[];
+
+    @OneToMany(
+        () => CommentEntity,
+        (comment) => comment.recipe,
+    )
+    comments: CommentEntity[];
 }

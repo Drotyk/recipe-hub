@@ -15,6 +15,8 @@ import {
   RecipesPage,
 } from './pages/recipes-pages';
 import { UserDetailPage, UsersPage } from './pages/users-pages';
+import { AboutPage, SupportPage } from './pages/info-pages';
+import { SettingsPage, NotificationsPage } from './pages/settings-notifications-pages';
 
 export default function App() {
   const { accessToken, sessionUser, logout } = useAuth();
@@ -40,7 +42,7 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (!accessToken && route.name !== 'auth') {
+    if (!accessToken && route.name !== 'auth' && route.name !== 'about' && route.name !== 'support') {
       navigate('/auth');
       return;
     }
@@ -66,7 +68,34 @@ export default function App() {
     };
   }, [toasts]);
 
-  if (!accessToken || route.name === 'auth') {
+  if (!accessToken) {
+    if (route.name === 'about') {
+      return (
+        <>
+          <ToastStack items={toasts} onDismiss={dismissToast} />
+          <AboutPage onNavigate={navigate} onMessage={handleMessage} />
+        </>
+      );
+    }
+    
+    if (route.name === 'support') {
+      return (
+        <>
+          <ToastStack items={toasts} onDismiss={dismissToast} />
+          <SupportPage onNavigate={navigate} onMessage={handleMessage} />
+        </>
+      );
+    }
+
+    return (
+      <>
+        <ToastStack items={toasts} onDismiss={dismissToast} />
+        <AuthPage onNavigate={navigate} onMessage={handleMessage} />
+      </>
+    );
+  }
+
+  if (route.name === 'auth') {
     return (
       <>
         <ToastStack items={toasts} onDismiss={dismissToast} />
@@ -107,6 +136,18 @@ export default function App() {
       break;
     case 'profile':
       page = <ProfilePage onNavigate={navigate} onMessage={handleMessage} />;
+      break;
+    case 'about':
+      page = <AboutPage onNavigate={navigate} onMessage={handleMessage} />;
+      break;
+    case 'support':
+      page = <SupportPage onNavigate={navigate} onMessage={handleMessage} />;
+      break;
+    case 'settings':
+      page = <SettingsPage onNavigate={navigate} onMessage={handleMessage} />;
+      break;
+    case 'notifications':
+      page = <NotificationsPage onNavigate={navigate} onMessage={handleMessage} />;
       break;
     default:
       page = <RecipesPage onNavigate={navigate} onMessage={handleMessage} />;

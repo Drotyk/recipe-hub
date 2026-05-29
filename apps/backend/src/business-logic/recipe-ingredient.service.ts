@@ -36,7 +36,6 @@ export class RecipeIngredientService {
         if (collectionOptions.recipeId) {
             baseFilter.recipeId = collectionOptions.recipeId;
         }
-
         if (collectionOptions.ingredientId) {
             baseFilter.ingredientId = collectionOptions.ingredientId;
         }
