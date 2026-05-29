@@ -11,7 +11,11 @@ export type Route =
   | { name: 'ingredient-detail'; id: number }
   | { name: 'users' }
   | { name: 'user-detail'; id: number }
-  | { name: 'profile' };
+  | { name: 'profile' }
+  | { name: 'about' }
+  | { name: 'support' }
+  | { name: 'settings' }
+  | { name: 'notifications' };
 
 export function parseRoute(pathname: string): Route {
   if (pathname === '/' || pathname === '') {
@@ -63,8 +67,20 @@ export function parseRoute(pathname: string): Route {
     return { name: 'user-detail', id: Number(userDetailMatch[1]) };
   }
 
-  if (pathname === '/profile') {
-    return { name: 'profile' };
+  if (pathname === '/about') {
+    return { name: 'about' };
+  }
+
+  if (pathname === '/support') {
+    return { name: 'support' };
+  }
+
+  if (pathname === '/settings') {
+    return { name: 'settings' };
+  }
+
+  if (pathname === '/notifications') {
+    return { name: 'notifications' };
   }
 
   return { name: 'recipes' };
@@ -105,6 +121,22 @@ export function getNavKey(route: Route) {
 
   if (route.name === 'profile') {
     return 'profile';
+  }
+
+  if (route.name === 'about') {
+    return 'about';
+  }
+
+  if (route.name === 'support') {
+    return 'support';
+  }
+
+  if (route.name === 'settings') {
+    return 'settings';
+  }
+
+  if (route.name === 'notifications') {
+    return 'notifications';
   }
 
   return 'recipes';

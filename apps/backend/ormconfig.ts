@@ -31,6 +31,7 @@ function getFilename() {
         try {
           return fileURLToPath(path);
         } catch {
+          // ignore
         }
       }
 

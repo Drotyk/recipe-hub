@@ -3,7 +3,7 @@ import { Button } from '../components/button';
 import { PageHeader } from '../components/layout';
 import { useAuth } from '../auth';
 import type { PageProps } from '../app/shared';
-import { PanelHeader } from '../components/surface';
+import { PanelHeader, EmptyState } from '../components/surface';
 
 /* ==========================================
    PUBLIC HEADER / SHELL FOR LOGGED OUT USERS
@@ -39,7 +39,7 @@ function PublicShell({ children, onNavigate }: { children: React.ReactNode; onNa
    ABOUT PAGE
    ========================================== */
 
-export function AboutPage({ onNavigate}: PageProps) {
+export function AboutPage({ onNavigate, onMessage }: PageProps) {
   const { accessToken } = useAuth();
 
   const content = (
