@@ -3,7 +3,7 @@ import { APP_PIPE } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 
 
-import { UserService } from '@/src/business-logic';
+import { UserService, CommentService } from '@/src/business-logic';
 import { IngredientService, RecipeIngredientService, RecipeService } from '@/src/business-logic';
 import { AuthService } from '@/src/business-logic/auth';
 import { loadEnv } from '@/src/common/utils';
@@ -13,6 +13,7 @@ import {
     IngredientController,
     RecipeIngredientController,
     AuthController,
+    CommentController,
 } from '@/src/controllers';
 import { DbModule } from '@/src/modules/db.module';
 
@@ -32,12 +33,14 @@ loadEnv();
         IngredientController,
         RecipeIngredientController,
         AuthController,
+        CommentController,
     ],
     providers: [
         UserService,
         RecipeIngredientService,
         RecipeService,
         IngredientService,
+        CommentService,
         {
             provide: APP_PIPE,
             useValue: new ValidationPipe({

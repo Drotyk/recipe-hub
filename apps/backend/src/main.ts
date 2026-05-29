@@ -12,6 +12,8 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule);
     app.enableCors();
 
+    app.enableCors();
+
     const configSwagger = new DocumentBuilder()
         .setTitle('Algoritm-lab')
         .setVersion('0.1.0')

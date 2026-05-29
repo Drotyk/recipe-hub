@@ -1,14 +1,48 @@
+import { existsSync } from 'fs';
 import { resolve } from 'path';
+import { fileURLToPath } from 'url';
 
+import { configDotenv } from 'dotenv';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { SnakeNamingStrategy } from 'typeorm-naming-strategies';
 
-import { loadEnv } from './src/common/utils';
 
+const envPaths = [
+  resolve(process.cwd(), '.env'),
+  resolve(process.cwd(), '../../.env'),
+];
+const envPath = envPaths.find((candidate) => existsSync(candidate));
 
-loadEnv();
+configDotenv(envPath ? { path: envPath } : undefined);
 
-const isTypeScriptRuntime = __filename.endsWith('.ts');
+function getFilename() {
+  if (typeof __filename !== 'undefined') return __filename;
+
+  try {
+    throw new Error();
+  } catch (e: unknown) {
+    const stack = (e instanceof Error ? e.stack : '') || '';
+    const match = stack.match(/(?:at\s+|\()([^()]+?):[0-9]+:[0-9]+/);
+
+    if (match && match[1]) {
+      let path = match[1];
+
+      if (path.startsWith('file://')) {
+        try {
+          return fileURLToPath(path);
+        } catch {
+          // ignore
+        }
+      }
+
+      return path;
+    }
+  }
+  return 'ormconfig.ts';
+}
+
+const filename = getFilename();
+const isTypeScriptRuntime = filename.endsWith('.ts');
 const runtimeRoot = isTypeScriptRuntime
   ? process.cwd()
   : resolve(process.cwd(), '../../dist/apps/backend');

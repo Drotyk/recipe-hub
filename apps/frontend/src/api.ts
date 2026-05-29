@@ -46,6 +46,17 @@ export type Recipe = {
   deletedAt: string | null;
 };
 
+export type Comment = {
+  id: number;
+  text: string;
+  recipeId: number;
+  authorId: number;
+  author?: User | null;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+};
+
 export type RecipeIngredient = {
   id: number;
   recipeId: number;
@@ -209,6 +220,23 @@ export function deleteRecipe(id: number) {
 
 export function getUser(id: number) {
   return apiFetch<User>(`/user/${id}`);
+}
+
+export function getRecipeComments(recipeId: number) {
+  return apiFetch<Comment[]>(`/recipe/${recipeId}/comments`);
+}
+
+export function createComment(recipeId: number, input: { text: string; authorId: number }) {
+  return apiFetch<Comment>(`/recipe/${recipeId}/comments`, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+}
+
+export function deleteComment(id: number) {
+  return apiFetch<Comment>(`/comment/${id}`, {
+    method: 'DELETE',
+  });
 }
 
 export function getRecipeIngredients(query: CollectionQuery = {}) {
