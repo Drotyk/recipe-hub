@@ -21,6 +21,18 @@ export class CommentService {
         });
     }
 
+    getCommentsForUser(userId: number) {
+        return this.commentRepository.find({
+            where: { authorId: userId },
+            relations: {
+                recipe: true,
+            },
+            order: {
+                createdAt: 'DESC',
+            },
+        });
+    }
+
     async createComment(recipeId: number, body: CreateCommentDto) {
         const recipeExists = await this.commentRepository.manager
             .getRepository(RecipeEntity)

@@ -27,6 +27,14 @@ export class CommentController {
         return plainToInstance(ViewCommentDto, data);
     }
 
+    @Get('user/:userId/comments')
+    @ApiOkResponse({ type: [ViewCommentDto] })
+    async getUserComments(@Param('userId', ParseIntPipe) userId: number) {
+        const data = await this.commentService.getCommentsForUser(userId);
+
+        return plainToInstance(ViewCommentDto, data);
+    }
+
     @Post('recipe/:recipeId/comments')
     @ApiOkResponse({ type: ViewCommentDto })
     async createComment(

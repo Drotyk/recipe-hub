@@ -7,4 +7,12 @@ export class UpdateUserDto {
     @Expose()
     @ApiPropertyOptional()
     name?: string;
+
+    @Expose()
+    @ApiPropertyOptional()
+    bio?: string;
+
+    @Expose()
+    @ApiPropertyOptional()
+    social?: string;
 }

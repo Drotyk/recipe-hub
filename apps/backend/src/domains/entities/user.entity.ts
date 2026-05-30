@@ -19,6 +19,12 @@ export class UserEntity extends AbstractEntity {
     @Column({ name: 'password' })
     password: string;
 
+    @Column({ name: 'bio', type: 'text', nullable: true })
+    bio?: string;
+
+    @Column({ name: 'social', type: 'text', nullable: true })
+    social?: string;
+
     @OneToMany(
         () => RecipeEntity,
         (recipe) => recipe.authorId,
