@@ -21,6 +21,8 @@ export type User = {
   id: number;
   name: string;
   email: string;
+  bio?: string;
+  social?: string;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
@@ -50,6 +52,7 @@ export type Comment = {
   id: number;
   text: string;
   recipeId: number;
+  recipe?: Recipe | null;
   authorId: number;
   author?: User | null;
   createdAt: string;
@@ -222,8 +225,19 @@ export function getUser(id: number) {
   return apiFetch<User>(`/user/${id}`);
 }
 
+export function updateUser(id: number, input: { name?: string; bio?: string; social?: string }) {
+  return apiFetch<User>(`/user/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+}
+
 export function getRecipeComments(recipeId: number) {
   return apiFetch<Comment[]>(`/recipe/${recipeId}/comments`);
+}
+
+export function getUserComments(userId: number) {
+  return apiFetch<Comment[]>(`/user/${userId}/comments`);
 }
 
 export function createComment(recipeId: number, input: { text: string; authorId: number }) {

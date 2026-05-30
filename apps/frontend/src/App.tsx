@@ -8,6 +8,7 @@ import { AuthPage } from './pages/auth-page';
 import { IngredientDetailPage, IngredientsPage } from './pages/ingredients-pages';
 import { ProfilePage } from './pages/profile-page';
 import {
+  DashboardPage,
   RecipeCreatePage,
   RecipeDetailPage,
   RecipeEditPage,
@@ -48,7 +49,7 @@ export default function App() {
     }
 
     if (accessToken && route.name === 'auth') {
-      navigate('/recipes');
+      navigate('/dashboard');
     }
   }, [accessToken, route.name]);
 
@@ -107,6 +108,9 @@ export default function App() {
   let page: React.ReactNode;
 
   switch (route.name) {
+    case 'dashboard':
+      page = <DashboardPage onNavigate={navigate} onMessage={handleMessage} />;
+      break;
     case 'recipes':
       page = <RecipesPage onNavigate={navigate} onMessage={handleMessage} />;
       break;
@@ -150,7 +154,7 @@ export default function App() {
       page = <NotificationsPage onNavigate={navigate} onMessage={handleMessage} />;
       break;
     default:
-      page = <RecipesPage onNavigate={navigate} onMessage={handleMessage} />;
+      page = <DashboardPage onNavigate={navigate} onMessage={handleMessage} />;
       break;
   }
 

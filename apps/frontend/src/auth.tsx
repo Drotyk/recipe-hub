@@ -20,6 +20,7 @@ type AuthContextType = {
   sessionUser: SessionUser | null;
   login: (email: string, password: string) => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
+  acceptTokens: (tokens: SessionTokens) => void;
   logout: () => void;
 };
 
@@ -88,7 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => setAccessToken(null);
 
   return (
-    <AuthContext.Provider value={{ accessToken, sessionUser, login, register, logout }}>
+    <AuthContext.Provider value={{ accessToken, sessionUser, login, register, acceptTokens: storeTokens, logout }}>
       {children}
     </AuthContext.Provider>
   );

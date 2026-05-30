@@ -22,10 +22,14 @@ import { EntityListButton } from '../components/list';
 import { ConfirmModal } from '../components/modal';
 import { ContentList, DetailSkeleton, EmptyState, ListSkeleton, PanelHeader } from '../components/surface';
 
+function getIngredientSearchFromUrl() {
+  return new URLSearchParams(window.location.search).get('search') ?? '';
+}
+
 export function IngredientsPage({ onNavigate, onMessage }: PageProps) {
   const [ingredients, setIngredients] = useState<CollectionResponse<Ingredient> | null>(null);
   const [selectedIngredientId, setSelectedIngredientId] = useState<number | null>(null);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(getIngredientSearchFromUrl);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(PAGE_SIZE);
   const [createName, setCreateName] = useState('');
@@ -57,7 +61,7 @@ export function IngredientsPage({ onNavigate, onMessage }: PageProps) {
   }
 
   useEffect(() => {
-    void loadIngredients('', 1, PAGE_SIZE);
+    void loadIngredients(search, 1, PAGE_SIZE);
   }, []);
 
   async function handleCreate(event: React.FormEvent) {
@@ -94,27 +98,67 @@ export function IngredientsPage({ onNavigate, onMessage }: PageProps) {
 
   return (
     <>
-      <PageHeader
-        eyebrow="Інгредієнти"
-        title="Реєстр кулінарних інгредієнтів"
-        description="Керуйте словником інгредієнтів для зв'язку зі стравами та підтримуйте єдиний реєстр у робочому просторі."
-      />
+      <section className="command-hero command-hero-compact">
+        <div className="command-hero-copy">
+          <span className="command-eyebrow">Інгредієнти</span>
+          <h2>Що додати до словника?</h2>
+        </div>
 
-      <section className="content-grid">
-        <div className="panel">
-          <PanelHeader title="Список інгредієнтів" meta={`${ingredients?.metadata.totalItems ?? 0} всього`} />
+        <form
+          className="command-search"
+          onSubmit={(event) => {
+            event.preventDefault();
+            setPage(1);
+            void loadIngredients(search, 1, perPage);
+          }}
+        >
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Введіть інгредієнт або знайдіть його у базі"
+          />
+        </form>
 
-          <form
-            className="toolbar"
-            onSubmit={(event) => {
-              event.preventDefault();
+        <div className="command-actions" aria-label="Швидкі дії">
+          <button
+            type="button"
+            onClick={() => {
+              const nextName = search.trim();
+
+              if (nextName) {
+                setCreateName(nextName);
+              }
+            }}
+          >
+            <span className="command-action-icon">+</span>
+            Підготувати створення
+          </button>
+          <button type="button" onClick={() => onNavigate('/recipes')}>
+            <span className="command-action-icon">#</span>
+            Перейти до рецептів
+          </button>
+          <button
+            type="button"
+            onClick={() => {
               setPage(1);
               void loadIngredients(search, 1, perPage);
             }}
           >
-            <TextInput value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Пошук інгредієнтів за назвою..." />
-            <Button type="submit">Пошук</Button>
-          </form>
+            <span className="command-action-icon">?</span>
+            Знайти інгредієнт
+          </button>
+        </div>
+
+        <div className="command-stats">
+          <span>{ingredients?.metadata.totalItems ?? 0} інгредієнтів</span>
+          <span>{ingredients?.metadata.perPage ?? 0} на сторінці</span>
+          <span>{ingredients?.metadata.totalPages ?? 0} сторінок</span>
+        </div>
+      </section>
+
+      <section className="content-grid command-content-grid">
+        <div className="panel command-results-panel">
+          <PanelHeader title="Список інгредієнтів" meta={`${ingredients?.metadata.totalItems ?? 0} всього`} />
 
           {loading ? <ListSkeleton rows={5} /> : null}
 

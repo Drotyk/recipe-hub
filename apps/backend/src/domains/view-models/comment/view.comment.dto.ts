@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose, Type } from 'class-transformer';
 
 import { ViewUserDto } from '@/src/domains/view-models/user';
+import { ViewRecipeDto } from '@/src/domains/view-models/recipe/view.recipe.dto';
 
 
 @Exclude()
@@ -26,6 +27,11 @@ export class ViewCommentDto {
     @Type(() => ViewUserDto)
     @ApiProperty()
     author: ViewUserDto;
+
+    @Expose()
+    @Type(() => ViewRecipeDto)
+    @ApiProperty({ required: false })
+    recipe?: ViewRecipeDto;
 
     @Expose()
     @ApiProperty()

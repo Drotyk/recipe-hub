@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 export type Route =
   | { name: 'auth' }
+  | { name: 'dashboard' }
   | { name: 'recipes' }
   | { name: 'recipe-new' }
   | { name: 'recipe-detail'; id: number }
@@ -19,11 +20,15 @@ export type Route =
 
 export function parseRoute(pathname: string): Route {
   if (pathname === '/' || pathname === '') {
-    return { name: 'recipes' };
+    return { name: 'dashboard' };
   }
 
   if (pathname === '/auth') {
     return { name: 'auth' };
+  }
+
+  if (pathname === '/dashboard') {
+    return { name: 'dashboard' };
   }
 
   if (pathname === '/recipes') {
@@ -75,6 +80,10 @@ export function parseRoute(pathname: string): Route {
     return { name: 'support' };
   }
 
+  if (pathname === '/profile') {
+    return { name: 'profile' };
+  }
+
   if (pathname === '/settings') {
     return { name: 'settings' };
   }
@@ -99,18 +108,22 @@ export function useRoute() {
   const route = useMemo(() => parseRoute(pathname), [pathname]);
 
   function navigate(path: string) {
-    if (path === window.location.pathname) {
+    if (path === `${window.location.pathname}${window.location.search}`) {
       return;
     }
 
     window.history.pushState({}, '', path);
-    setPathname(path);
+    setPathname(window.location.pathname);
   }
 
   return { route, navigate };
 }
 
 export function getNavKey(route: Route) {
+  if (route.name === 'dashboard') {
+    return 'dashboard';
+  }
+
   if (route.name === 'ingredients' || route.name === 'ingredient-detail') {
     return 'ingredients';
   }

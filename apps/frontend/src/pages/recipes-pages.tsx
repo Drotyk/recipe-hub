@@ -33,10 +33,168 @@ import { EntityListButton } from '../components/list';
 import { ConfirmModal } from '../components/modal';
 import { ContentList, DetailSkeleton, EmptyState, ListSkeleton, PanelHeader, StatusMessage } from '../components/surface';
 
-export function RecipesPage({ onNavigate, onMessage }: PageProps) {
+function getRecipeSearchFromUrl() {
+  return new URLSearchParams(window.location.search).get('search') ?? '';
+}
+
+export function DashboardPage({ onNavigate, onMessage }: PageProps) {
   const [recipes, setRecipes] = useState<CollectionResponse<Recipe> | null>(null);
   const [search, setSearch] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [suggestions, setSuggestions] = useState<Recipe[]>([]);
+  const [ingredientSuggestions, setIngredientSuggestions] = useState<Ingredient[]>([]);
+  const [suggestionsOpen, setSuggestionsOpen] = useState(false);
+
+  useEffect(() => {
+    async function loadSummary() {
+      try {
+        const data = await getRecipes({ page: 1, perPage: 1 });
+        setRecipes(data);
+      } catch (error) {
+        onMessage('error', await readApiError(error));
+      }
+    }
+
+    void loadSummary();
+  }, []);
+
+  useEffect(() => {
+    const query = search.trim();
+
+    if (query.length < 2) {
+      setSuggestions([]);
+      setSuggestionsOpen(false);
+      return;
+    }
+
+    let active = true;
+    const timer = window.setTimeout(async () => {
+      try {
+        const data = await getRecipes({ page: 1, perPage: 5, search: query });
+
+        if (!active) {
+          return;
+        }
+
+        setSuggestions(data.items);
+        const ingredientData = await getIngredients({ page: 1, perPage: 5, search: query });
+
+        if (!active) {
+          return;
+        }
+
+        setIngredientSuggestions(ingredientData.items);
+        setSuggestionsOpen(data.items.length > 0 || ingredientData.items.length > 0);
+      } catch {
+        if (active) {
+          setSuggestions([]);
+          setIngredientSuggestions([]);
+          setSuggestionsOpen(false);
+        }
+      }
+    }, 220);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+    };
+  }, [search]);
+
+  return (
+    <section className="command-hero dashboard-command-hero">
+      <div className="command-hero-copy">
+        <span className="command-eyebrow">Панель</span>
+        <h2>Що готуємо сьогодні?</h2>
+      </div>
+
+      <div className="command-search-wrap">
+        <form
+          className="command-search"
+          onSubmit={(event) => {
+            event.preventDefault();
+            const query = search.trim();
+
+            setSuggestionsOpen(false);
+            onNavigate(query ? `/recipes?search=${encodeURIComponent(query)}` : '/recipes');
+          }}
+        >
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            onFocus={() => setSuggestionsOpen(suggestions.length > 0 || ingredientSuggestions.length > 0)}
+            placeholder="Введіть назву рецепта або інгредієнт, що у вас є"
+          />
+        </form>
+
+        {suggestionsOpen ? (
+          <div className="command-suggestions">
+            {suggestions.length ? <div className="command-suggestion-label">Рецепти</div> : null}
+            {suggestions.map((recipe) => (
+              <button
+                key={recipe.id}
+                type="button"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => {
+                  setSuggestionsOpen(false);
+                  onNavigate(`/recipes/${recipe.id}`);
+                }}
+              >
+                <span>
+                  <strong>{recipe.name}</strong>
+                  <small>{recipe.author?.name ?? `Користувач #${recipe.authorId}`}</small>
+                </span>
+                <small>{formatDate(recipe.updatedAt)}</small>
+              </button>
+            ))}
+            {ingredientSuggestions.length ? <div className="command-suggestion-label">Інгредієнти</div> : null}
+            {ingredientSuggestions.map((ingredient) => (
+              <button
+                key={ingredient.id}
+                type="button"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => {
+                  setSuggestionsOpen(false);
+                  onNavigate(`/ingredients/${ingredient.id}`);
+                }}
+              >
+                <span>
+                  <strong>{ingredient.name}</strong>
+                  <small>Інгредієнт у вашій базі</small>
+                </span>
+                <small>{formatDate(ingredient.updatedAt)}</small>
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+
+      <div className="command-actions" aria-label="Швидкі дії">
+        <button type="button" onClick={() => onNavigate('/recipes/new')}>
+          <span className="command-action-icon">+</span>
+          Створити рецепт
+        </button>
+        <button type="button" onClick={() => onNavigate('/ingredients')}>
+          <span className="command-action-icon">#</span>
+          Внести інгредієнти
+        </button>
+        <button type="button" onClick={() => onNavigate('/recipes')}>
+          <span className="command-action-icon">?</span>
+          Відкрити рецепти
+        </button>
+      </div>
+
+      <div className="command-stats">
+        <span>{recipes?.metadata.totalItems ?? 0} рецептів</span>
+        <span>База даних</span>
+        <span>Окрема сторінка</span>
+      </div>
+    </section>
+  );
+}
+
+export function RecipesPage({ onNavigate, onMessage }: PageProps) {
+  const [recipes, setRecipes] = useState<CollectionResponse<Recipe> | null>(null);
+  const [search, setSearch] = useState(getRecipeSearchFromUrl);
+  const [debouncedSearch, setDebouncedSearch] = useState(getRecipeSearchFromUrl);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(PAGE_SIZE);
   const [loading, setLoading] = useState(true);
@@ -72,9 +230,9 @@ export function RecipesPage({ onNavigate, onMessage }: PageProps) {
   return (
     <>
       <PageHeader
-        eyebrow="Рецепти"
-        title="Каталог рецептів"
-        description="Переглядайте рецепти нашої спільноти, шукайте страви за назвою та відкривайте для себе нові смаки."
+        eyebrow="База даних"
+        title="Рецепти"
+        description="Окрема сторінка для пошуку, перегляду та керування рецептами."
         actions={
           <Button variant="primary" type="button" onClick={() => onNavigate('/recipes/new')}>
             Створити рецепт
@@ -82,28 +240,26 @@ export function RecipesPage({ onNavigate, onMessage }: PageProps) {
         }
       />
 
-      <section className="summary-band">
-        <article className="summary-item">
-          <span>Усього страв</span>
-          <strong>{recipes?.metadata.totalItems ?? 0}</strong>
-        </article>
-        <article className="summary-item">
-          <span>Рецептів на сторінці</span>
-          <strong>{recipes?.metadata.perPage ?? 0}</strong>
-        </article>
-        <article className="summary-item">
-          <span>Всього сторінок</span>
-          <strong>{recipes?.metadata.totalPages ?? 0}</strong>
-        </article>
-      </section>
+      <section className="content-grid command-content-grid">
+        <div className="panel command-results-panel">
+          <PanelHeader title="База даних рецептів" meta={`${recipes?.metadata.totalItems ?? 0} всього`} />
 
-      <section className="content-grid">
-        <div className="panel">
-          <PanelHeader title="Список страв" meta={`${recipes?.metadata.totalItems ?? 0} всього`} />
-
-          <div className="toolbar">
-            <TextInput value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Пошук рецептів у реальному часі за назвою..." />
-          </div>
+          <form
+            className="toolbar"
+            onSubmit={(event) => {
+              event.preventDefault();
+              setPage(1);
+              setDebouncedSearch(search);
+              void loadRecipes(search, 1, perPage);
+            }}
+          >
+            <TextInput
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Пошук рецептів за назвою..."
+            />
+            <Button type="submit">Пошук</Button>
+          </form>
 
           {loading ? <ListSkeleton rows={5} /> : null}
 
@@ -144,19 +300,6 @@ export function RecipesPage({ onNavigate, onMessage }: PageProps) {
               setPage(1);
             }}
           />
-        </div>
-
-        <div className="panel-stack">
-          <section className="panel">
-            <PanelHeader title="Наступний крок" meta="Творчість" />
-
-            <p className="support-copy">
-              Почніть створювати новий кулінарний рецепт, а на наступному кроці ви зможете додати інгредієнти та їх точну кількість.
-            </p>
-            <Button variant="primary" type="button" onClick={() => onNavigate('/recipes/new')}>
-              Написати рецепт
-            </Button>
-          </section>
         </div>
       </section>
     </>
@@ -753,7 +896,43 @@ export function RecipeDetailPage({ id, onNavigate, onMessage }: PageProps & { id
             <PanelHeader title="Огляд рецепта" meta={`#${recipe.id}`} />
             <DetailGrid>
               <DetailCard label="Назва" value={recipe.name} />
-              <DetailCard label="Автор" value={recipe.author?.name ?? `Користувач #${recipe.authorId}`} />
+              <DetailCard
+                label="Автор"
+                value={
+                  <a
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onNavigate(`/users/${recipe.authorId}`);
+                    }}
+                    style={{
+                      color: 'var(--primary-accent)',
+                      textDecoration: 'none',
+                      borderBottom: '1px dashed var(--fg-muted)',
+                      paddingBottom: '2px',
+                      transition: 'all 0.2s',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '0.25rem'
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.color = 'var(--primary-accent-hover)';
+                      e.currentTarget.style.borderBottomColor = 'var(--primary-accent-hover)';
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.color = 'var(--primary-accent)';
+                      e.currentTarget.style.borderBottomColor = 'var(--fg-muted)';
+                    }}
+                    title="Перейти до профілю автора"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ transform: 'translateY(-0.5px)' }}>
+                      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                      <circle cx="12" cy="7" r="4"/>
+                    </svg>
+                    {recipe.author?.name ?? `Користувач #${recipe.authorId}`}
+                  </a>
+                }
+              />
               <DetailCard label="Створено" value={formatDate(recipe.createdAt)} />
               <DetailCard label="Оновлено" value={formatDate(recipe.updatedAt)} />
             </DetailGrid>
@@ -812,9 +991,41 @@ export function RecipeDetailPage({ id, onNavigate, onMessage }: PageProps & { id
                               style={{ width: '1.1rem', height: '1.1rem', accentColor: 'var(--primary-accent)', cursor: 'pointer' }}
                             />
                           )}
-                          <strong style={{ color: isChecked ? 'var(--fg-muted)' : 'var(--fg-app)' }}>
-                            {item.ingredient?.name ?? `Інгредієнт #${item.ingredientId}`}
-                          </strong>
+                          {cookingMode ? (
+                            <strong style={{ color: isChecked ? 'var(--fg-muted)' : 'var(--fg-app)' }}>
+                              {item.ingredient?.name ?? `Інгредієнт #${item.ingredientId}`}
+                            </strong>
+                          ) : (
+                            <strong style={{ color: 'var(--fg-app)' }}>
+                              <a
+                                href="#"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  onNavigate(`/ingredients/${item.ingredientId}`);
+                                }}
+                                style={{
+                                  color: 'var(--fg-app)',
+                                  textDecoration: 'none',
+                                  borderBottom: '1px dashed var(--fg-muted)',
+                                  paddingBottom: '1px',
+                                  transition: 'all 0.2s',
+                                  cursor: 'pointer'
+                                }}
+                                onMouseOver={(e) => {
+                                  e.currentTarget.style.color = 'var(--primary-accent-hover)';
+                                  e.currentTarget.style.borderBottomColor = 'var(--primary-accent-hover)';
+                                }}
+                                onMouseOut={(e) => {
+                                  e.currentTarget.style.color = 'var(--fg-app)';
+                                  e.currentTarget.style.borderBottomColor = 'var(--fg-muted)';
+                                }}
+                                title="Переглянути деталі інгредієнта"
+                              >
+                                {item.ingredient?.name ?? `Інгредієнт #${item.ingredientId}`}
+                              </a>
+                            </strong>
+                          )}
                         </div>
                         <span style={{ color: isChecked ? 'var(--fg-muted)' : 'var(--primary-accent)', fontWeight: 500 }}>
                           {item.amount} {item.unit}
@@ -887,11 +1098,9 @@ export function RecipeDetailPage({ id, onNavigate, onMessage }: PageProps & { id
 
           </div>
 
-          {/* Comments Section */}
           <section className="panel" style={{ padding: '1.5rem', display: 'grid', gap: '1.25rem' }}>
             <PanelHeader title="Коментарі спільноти" meta={`${comments.length} відгуків`} />
 
-            {/* Post comment form */}
             <form onSubmit={handlePostComment} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <TextArea
                 value={commentText}
@@ -908,7 +1117,6 @@ export function RecipeDetailPage({ id, onNavigate, onMessage }: PageProps & { id
               </div>
             </form>
 
-            {/* Comments list */}
             {comments.length ? (
               <ContentList>
                 {comments.map((comment) => {
@@ -930,7 +1138,6 @@ export function RecipeDetailPage({ id, onNavigate, onMessage }: PageProps & { id
                         alignItems: 'flex-start'
                       }}
                     >
-                      {/* Avatar */}
                       <div
                         style={{
                           width: '2.5rem',
@@ -949,7 +1156,6 @@ export function RecipeDetailPage({ id, onNavigate, onMessage }: PageProps & { id
                         {authorInitials}
                       </div>
 
-                      {/* Comment body */}
                       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
                           <span style={{ fontWeight: 600, color: 'var(--fg-app)' }}>
