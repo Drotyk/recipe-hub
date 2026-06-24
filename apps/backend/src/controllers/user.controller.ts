@@ -8,16 +8,19 @@ import {
     Patch,
     Post,
     Query,
+    Req,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 
 import { UserService } from '@/src/business-logic/user.service';
+import { IAuthenticatedRequest } from '@/src/common/interfaces';
 import { CollectionOptionsDto } from '@/src/domains/view-models/collection';
 import { CollectionUserDto, CreateUserDto, UpdateUserDto, ViewUserDto } from '@/src/domains/view-models/user';
 
 
 @ApiTags('User')
+@ApiBearerAuth()
 @Controller('user')
 export class UserController {
     constructor(private readonly userService: UserService) {}
@@ -48,15 +51,19 @@ export class UserController {
    async updateUser(
         @Param('id', ParseIntPipe) id: number,
         @Body() body: UpdateUserDto,
+        @Req() req: IAuthenticatedRequest,
     ) {
-        const user= await this.userService.updateUser(id, body)
+        const user= await this.userService.updateUser(id, body, req.user)
 
         return plainToInstance(ViewUserDto, user);
     }
 
     @Delete(':id')
-    async deleteUser(@Param('id', ParseIntPipe)id: number) {
-        const user = await this.userService.deleteUser(id)
+    async deleteUser(
+        @Param('id', ParseIntPipe)id: number,
+        @Req() req: IAuthenticatedRequest,
+    ) {
+        const user = await this.userService.deleteUser(id, req.user)
 
         return plainToInstance(ViewUserDto, user);
     }

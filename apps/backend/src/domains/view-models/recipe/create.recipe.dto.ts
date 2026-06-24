@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Exclude, Expose, Type } from 'class-transformer';
-import { IsNotEmpty, Min } from 'class-validator';
+import { IsNotEmpty } from 'class-validator';
 
 
 @Exclude()
@@ -17,9 +17,4 @@ export class CreateRecipeDto {
     @ApiProperty({ example: '1) take the pan. 2) make the pancakes' })
     text: string
 
-    @Min(1)
-    @Type(() => Number)
-    @Expose()
-    @ApiProperty({ example: 1 })
-    authorId: number
 }

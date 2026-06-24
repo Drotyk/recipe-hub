@@ -1,7 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { FindOptionsWhere, ILike } from 'typeorm';
 
 import { IngredientEntity, RecipeEntity } from '@/src/domains/entities';
+import { IJwtUserInfo } from '@/src/common/interfaces';
 import { CollectionMetadata, CollectionOptionsDto } from '@/src/domains/view-models/collection';
 import { CreateRecipeIngredientsDto, UpdateRecipeIngredientsDto } from '@/src/domains/view-models/recipe-ingredients';
 import { RecipeIngredientsRepository } from '@/src/repositories/recipe-ingredients.repository';
@@ -18,18 +19,79 @@ export class RecipeIngredientService {
         });
     }
 
-    async updateRecipeIngredient(id: number, body: UpdateRecipeIngredientsDto) {
+    /**
+     * @ai-context Зв'язок recipe-ingredient змінює склад конкретного рецепта.
+     * Тому права перевіряються через власника рецепта, а не через автора інгредієнта.
+     */
+    private async assertRecipeOwner(recipeId: number, currentUser: IJwtUserInfo) {
+        const recipe = await this.recipeIngredientsRepository.manager
+            .getRepository(RecipeEntity)
+            .findOne({ where: { id: recipeId } });
+
+        if (!recipe) {
+            throw new BadRequestException({
+                message: 'Recipe with id = recipeId was not found',
+                recipeId,
+            });
+        }
+
+        if (!currentUser.isAdmin && recipe.authorId !== currentUser.id) {
+            throw new ForbiddenException('You can only modify ingredients for your own recipes');
+        }
+
+        return recipe;
+    }
+
+    /**
+     * @ai-context При зміні recipeId потрібно перевірити права і на старий, і на новий рецепт.
+     * Інакше користувач міг би перенести ingredient row до чужого рецепта.
+     */
+    async updateRecipeIngredient(id: number, body: UpdateRecipeIngredientsDto, currentUser: IJwtUserInfo) {
+        const existingRecipeIngredient = await this.recipeIngredientsRepository.findOne({
+            where: { id },
+        });
+
+        if (!existingRecipeIngredient) {
+            throw new NotFoundException({
+                message: 'Recipe ingredient was not found',
+                id,
+            });
+        }
+
+        await this.assertRecipeOwner(existingRecipeIngredient.recipeId, currentUser);
+
+        if (body.recipeId && body.recipeId !== existingRecipeIngredient.recipeId) {
+            await this.assertRecipeOwner(body.recipeId, currentUser);
+        }
+
         await this.recipeIngredientsRepository.update(id, body);
 
         return this.getOneById(id);
     }
 
-    async deleteRecipeIngredient(id: number) {
+    async deleteRecipeIngredient(id: number, currentUser: IJwtUserInfo) {
+        const existingRecipeIngredient = await this.recipeIngredientsRepository.findOne({
+            where: { id },
+        });
+
+        if (!existingRecipeIngredient) {
+            throw new NotFoundException({
+                message: 'Recipe ingredient was not found',
+                id,
+            });
+        }
+
+        await this.assertRecipeOwner(existingRecipeIngredient.recipeId, currentUser);
+
         await this.recipeIngredientsRepository.softDelete(id);
 
-        return this.getOneById(id);
+        return existingRecipeIngredient;
     }
 
+    /**
+     * @ai-context Колекція підтримує фільтри `recipeId` і `ingredientId`, бо frontend
+     * використовує цей endpoint і для сторінки складу рецепта, і для пошуку за інгредієнтами.
+     */
     async getRecipeIngredientCollection(collectionOptions: CollectionOptionsDto){
         const baseFilter: FindOptionsWhere<any> = {};
 
@@ -66,17 +128,15 @@ export class RecipeIngredientService {
         }
     }
 
-    async createRecipeIngredient(createRecipeIngredientDto: CreateRecipeIngredientsDto) {
-        const existingRecipe = await this.recipeIngredientsRepository.manager
-            .getRepository(RecipeEntity)
-            .findOne({ where: { id: createRecipeIngredientDto.recipeId } });
-
-        if (!existingRecipe) {
-            throw new BadRequestException({
-                message: 'Recipe with id = recipeId was not found',
-                recipeId: createRecipeIngredientDto.recipeId,
-            });
-        }
+    /**
+     * @ai-context Перед створенням перевіряємо власника рецепта і існування інгредієнта.
+     * Це захищає від записів recipe_ingredients з невалідними зовнішніми ключами на рівні бізнес-логіки.
+     */
+    async createRecipeIngredient(
+        createRecipeIngredientDto: CreateRecipeIngredientsDto,
+        currentUser: IJwtUserInfo,
+    ) {
+        await this.assertRecipeOwner(createRecipeIngredientDto.recipeId, currentUser);
 
         const existingIngredient = await this.recipeIngredientsRepository.manager
             .getRepository(IngredientEntity)

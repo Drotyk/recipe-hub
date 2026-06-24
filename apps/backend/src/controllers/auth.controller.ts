@@ -1,9 +1,11 @@
 import { Body, Controller, Get, Post, Query, Res } from '@nestjs/common';
 
 import { AuthService } from '@/src/business-logic/auth';
+import { Public } from '@/src/common/decorators';
 import { LoginDto, RegisterDto } from '@/src/domains/view-models/auth';
 
 
+@Public()
 @Controller('auth')
 export class AuthController {
     constructor(private readonly authService: AuthService) {}

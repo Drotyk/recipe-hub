@@ -4,6 +4,8 @@ import type { SessionUser } from '../auth';
 import { getNavKey, type Route } from '../app/routing';
 import { getUser } from '../api';
 
+const SIDEBAR_COLLAPSED_EVENT = 'sidebar-collapsed-change';
+
 /* ==========================================
    PREMIUM VECTOR CUSTOM SVG ICONS
    ========================================== */
@@ -109,10 +111,27 @@ function Sidebar({
     localStorage.setItem('app-theme', theme);
   }, [theme]);
 
+  useEffect(() => {
+    function handleSidebarCollapsedChange(event: Event) {
+      const detail = (event as CustomEvent<boolean>).detail;
+
+      if (typeof detail === 'boolean') {
+        setIsCollapsed(detail);
+      }
+    }
+
+    window.addEventListener(SIDEBAR_COLLAPSED_EVENT, handleSidebarCollapsedChange);
+
+    return () => {
+      window.removeEventListener(SIDEBAR_COLLAPSED_EVENT, handleSidebarCollapsedChange);
+    };
+  }, []);
+
   const toggleCollapse = () => {
     setIsCollapsed(prev => {
       const next = !prev;
       localStorage.setItem('sidebar-collapsed', String(next));
+      window.dispatchEvent(new CustomEvent(SIDEBAR_COLLAPSED_EVENT, { detail: next }));
       return next;
     });
   };

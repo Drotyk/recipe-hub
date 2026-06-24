@@ -23,6 +23,11 @@ export default function App() {
   const { accessToken, sessionUser, logout } = useAuth();
   const { route, navigate } = useRoute();
   const [toasts, setToasts] = useState<ToastItem[]>([]);
+  /**
+   * @ai-context Це frontend-only список сторінок, доступних без accessToken.
+   * Він не відкриває backend endpoints; backend public/private контролюється `@Public()`.
+   */
+  const isPublicRoute = ['auth', 'about', 'support', 'recipes', 'ingredients'].includes(route.name);
 
   function handleMessage(type: 'error' | 'success', text: string | null) {
     if (!text) {
@@ -43,7 +48,7 @@ export default function App() {
   }
 
   useEffect(() => {
-    if (!accessToken && route.name !== 'auth' && route.name !== 'about' && route.name !== 'support') {
+    if (!accessToken && !isPublicRoute) {
       navigate('/auth');
       return;
     }
@@ -51,7 +56,7 @@ export default function App() {
     if (accessToken && route.name === 'auth') {
       navigate('/dashboard');
     }
-  }, [accessToken, route.name]);
+  }, [accessToken, isPublicRoute, route.name]);
 
   useEffect(() => {
     if (!toasts.length) {
@@ -84,6 +89,28 @@ export default function App() {
         <>
           <ToastStack items={toasts} onDismiss={dismissToast} />
           <SupportPage onNavigate={navigate} onMessage={handleMessage} />
+        </>
+      );
+    }
+
+    if (route.name === 'recipes') {
+      return (
+        <>
+          <ToastStack items={toasts} onDismiss={dismissToast} />
+          <Shell route={route} sessionUser={sessionUser} onLogout={logout} onNavigate={navigate}>
+            <RecipesPage onNavigate={navigate} onMessage={handleMessage} />
+          </Shell>
+        </>
+      );
+    }
+
+    if (route.name === 'ingredients') {
+      return (
+        <>
+          <ToastStack items={toasts} onDismiss={dismissToast} />
+          <Shell route={route} sessionUser={sessionUser} onLogout={logout} onNavigate={navigate}>
+            <IngredientsPage onNavigate={navigate} onMessage={handleMessage} />
+          </Shell>
         </>
       );
     }
