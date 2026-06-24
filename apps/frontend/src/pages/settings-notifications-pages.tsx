@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { type PageProps } from '../app/shared';
 import { Button } from '../components/button';
 import { Field, TextInput } from '../components/form';
@@ -6,12 +6,29 @@ import { PageHeader } from '../components/layout';
 import { ContentList, PanelHeader } from '../components/surface';
 import { useAuth } from '../auth';
 
+const SIDEBAR_COLLAPSED_EVENT = 'sidebar-collapsed-change';
+
 export function SettingsPage({ onNavigate, onMessage }: PageProps) {
   const { sessionUser } = useAuth();
   const [themeMode, setThemeMode] = useState(() => localStorage.getItem('app-theme') || 'dark');
-  const [colorAccent, setColorAccent] = useState('mint');
-  const [sidebarCollapsible, setSidebarCollapsible] = useState(true);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => localStorage.getItem('sidebar-collapsed') === 'true');
   const [emailNotify, setEmailNotify] = useState(true);
+
+  useEffect(() => {
+    function handleSidebarCollapsedEvent(event: Event) {
+      const detail = (event as CustomEvent<boolean>).detail;
+
+      if (typeof detail === 'boolean') {
+        setIsSidebarCollapsed(detail);
+      }
+    }
+
+    window.addEventListener(SIDEBAR_COLLAPSED_EVENT, handleSidebarCollapsedEvent);
+
+    return () => {
+      window.removeEventListener(SIDEBAR_COLLAPSED_EVENT, handleSidebarCollapsedEvent);
+    };
+  }, []);
   
   function handleThemeChange(mode: 'light' | 'dark') {
     setThemeMode(mode);
@@ -24,6 +41,13 @@ export function SettingsPage({ onNavigate, onMessage }: PageProps) {
     onMessage('success', `Тему успішно змінено на ${mode === 'light' ? 'світлу' : 'темну'}.`);
   }
 
+  function handleSidebarCollapsedChange(next: boolean) {
+    setIsSidebarCollapsed(next);
+    localStorage.setItem('sidebar-collapsed', String(next));
+    window.dispatchEvent(new CustomEvent(SIDEBAR_COLLAPSED_EVENT, { detail: next }));
+    onMessage('success', next ? 'Бічне меню згорнуто.' : 'Бічне меню розгорнуто.');
+  }
+
   function handleSaveSettings(e: React.FormEvent) {
     e.preventDefault();
     onMessage('success', 'Налаштування інтерфейсу успішно збережено!');
@@ -34,7 +58,7 @@ export function SettingsPage({ onNavigate, onMessage }: PageProps) {
       <PageHeader
         eyebrow="Налаштування"
         title="Параметри робочого простору"
-        description="Керуйте налаштуваннями інтерфейсу, теми, колірних акцентів та сповіщень у реальному часі."
+        description="Керуйте налаштуваннями інтерфейсу, теми та сповіщень у реальному часі."
       />
 
       <div style={{ display: 'grid', gap: '1.5rem', width: '100%' }}>
@@ -43,19 +67,16 @@ export function SettingsPage({ onNavigate, onMessage }: PageProps) {
         <form className="panel" onSubmit={handleSaveSettings}>
           <PanelHeader title="Профіль та сесія" meta="Параметри" />
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '0.5rem' }}>
+          <div style={{ display: 'grid', gap: '1rem', marginTop: '0.5rem' }}>
             <Field label="Активний користувач">
               <TextInput value={sessionUser?.email ?? 'Користувач'} disabled />
-            </Field>
-            <Field label="Права доступу">
-              <TextInput value="Адміністратор системи" disabled />
             </Field>
           </div>
         </form>
 
         {/* Interface Settings */}
         <form className="panel" onSubmit={handleSaveSettings}>
-          <PanelHeader title="Зовнішній вигляд" meta="Тема та кольори" />
+          <PanelHeader title="Зовнішній вигляд" meta="Тема" />
           
           <div style={{ display: 'grid', gap: '1.25rem', marginTop: '0.5rem' }}>
             
@@ -81,37 +102,17 @@ export function SettingsPage({ onNavigate, onMessage }: PageProps) {
               </div>
             </Field>
 
-            {/* Accent color */}
-            <Field label="Колірний акцент">
-              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.25rem' }}>
-                {['mint', 'peach', 'lavender'].map((color) => (
-                  <Button
-                    key={color}
-                    type="button"
-                    variant={colorAccent === color ? 'primary' : 'secondary'}
-                    onClick={() => {
-                      setColorAccent(color);
-                      onMessage('success', `Обрано колірний акцент: ${color.toUpperCase()}`);
-                    }}
-                    style={{ flex: 1 }}
-                  >
-                    {color === 'mint' ? 'М\'ята' : color === 'peach' ? 'Персик' : 'Лаванда'}
-                  </Button>
-                ))}
-              </div>
-            </Field>
-
-            {/* Collapsible Sidebar switch */}
+            {/* Sidebar collapse switch */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 0', borderBottom: '1px solid var(--sidebar-border)' }}>
               <div>
-                <strong style={{ display: 'block', fontSize: '0.95rem' }}>Згортання бічного меню</strong>
-                <span style={{ fontSize: '0.82rem', color: 'var(--fg-muted)' }}>Дозволяє автоматично ховати назви навігації</span>
+                <strong style={{ display: 'block', fontSize: '0.95rem' }}>Згорнути бічне меню</strong>
+                <span style={{ fontSize: '0.82rem', color: 'var(--fg-muted)' }}>Ховає назви навігації та залишає лише іконки</span>
               </div>
               <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                 <input 
                   type="checkbox" 
-                  checked={sidebarCollapsible} 
-                  onChange={(e) => setSidebarCollapsible(e.target.checked)}
+                  checked={isSidebarCollapsed} 
+                  onChange={(e) => handleSidebarCollapsedChange(e.target.checked)}
                   style={{ width: '1.25rem', height: '1.25rem', accentColor: 'var(--primary-accent)', cursor: 'pointer' }}
                 />
               </label>

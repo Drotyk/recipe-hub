@@ -18,6 +18,10 @@ export type Route =
   | { name: 'settings' }
   | { name: 'notifications' };
 
+/**
+ * @ai-context У проєкті немає react-router; це єдине місце, де URL перетворюється на route state.
+ * При додаванні сторінки онови `Route`, `parseRoute`, `getNavKey` і switch у `App.tsx`.
+ */
 export function parseRoute(pathname: string): Route {
   if (pathname === '/' || pathname === '') {
     return { name: 'dashboard' };

@@ -15,7 +15,7 @@ export class RecipeEntity extends AbstractEntity {
     @Column()
     name: string;
 
-    @Column()
+    @Column({ type: 'text' })
     text: string;
 
     @Column()

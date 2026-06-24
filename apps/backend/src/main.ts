@@ -18,6 +18,7 @@ async function bootstrap() {
     const configSwagger = new DocumentBuilder()
         .setTitle('Algoritm-lab')
         .setVersion('0.1.0')
+        .addBearerAuth()
         .build();
 
     const document = SwaggerModule.createDocument(app, configSwagger);

@@ -46,6 +46,9 @@ importers:
       ms:
         specifier: ^2.1.3
         version: 2.1.3
+      passport:
+        specifier: ^0.7.0
+        version: 0.7.0
       passport-jwt:
         specifier: ^4.0.1
         version: 4.0.1

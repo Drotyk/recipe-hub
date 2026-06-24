@@ -30,6 +30,10 @@ export class AuthService {
         return this.generateTokenPair(registeredUser);
     }
 
+    /**
+     * @ai-context JWT payload має залишатися синхронізованим з frontend `SessionUser`.
+     * Якщо додати поле сюди, перевір `apps/frontend/src/auth.tsx`.
+     */
     private generateTokenPair ({ id, email, isAdmin }: IJwtUserInfo) {
         const payload = { id, email, isAdmin };
 
@@ -43,6 +47,10 @@ export class AuthService {
         };
     }
 
+    /**
+     * @ai-context Для login навмисно повертаємо однакову помилку для невідомого email
+     * і неправильного пароля, щоб не розкривати існування акаунта.
+     */
     async loginUser(loginDto: LoginDto) {
         const user = await this.userService.getOneByEmail(loginDto.email);
 
@@ -59,6 +67,10 @@ export class AuthService {
         return this.generateTokenPair(user);
     }
 
+    /**
+     * @ai-context OAuth state підписується JWT на 10 хвилин.
+     * Callback має перевірити provider, щоб не приймати чужий або підмінений state.
+     */
     getGoogleAuthUrl() {
         const clientId = process.env['GOOGLE_CLIENT_ID'];
         const redirectUri = process.env['GOOGLE_REDIRECT_URI'];
@@ -82,6 +94,10 @@ export class AuthService {
         return `${this.googleAuthorizeUrl}?${params.toString()}`;
     }
 
+    /**
+     * @ai-context Google OAuth або логінить існуючого користувача за verified email,
+     * або створює нового з випадковим паролем, бо пароль напряму не використовується.
+     */
     async loginWithGoogle(code: string, state: string) {
         const clientId = process.env['GOOGLE_CLIENT_ID'];
         const clientSecret = process.env['GOOGLE_CLIENT_SECRET'];

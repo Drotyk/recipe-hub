@@ -1,8 +1,9 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
 import { ILike } from 'typeorm';
 
 
 import { hashPassword } from '@/src/common/utils';
+import { IJwtUserInfo } from '@/src/common/interfaces';
 import { CollectionMetadata, CollectionOptionsDto } from '@/src/domains/view-models/collection';
 import { CreateUserDto } from '@/src/domains/view-models/user';
 import { UpdateUserDto } from '@/src/domains/view-models/user/update.user.dto';
@@ -19,7 +20,17 @@ export class UserService {
         });
     }
 
-    async deleteUser(id: number) {
+    private assertSelfOrAdmin(id: number, currentUser: IJwtUserInfo) {
+        if (currentUser.isAdmin || currentUser.id === id) {
+            return;
+        }
+
+        throw new ForbiddenException('You can only modify your own user account');
+    }
+
+    async deleteUser(id: number, currentUser: IJwtUserInfo) {
+        this.assertSelfOrAdmin(id, currentUser);
+
         await this.userRepository.softDelete( id );
 
         return this.getOneById(id);
@@ -47,7 +58,9 @@ export class UserService {
         return this.userRepository.save(created);
     }
 
-    async updateUser(id: number, body: UpdateUserDto) {
+    async updateUser(id: number, body: UpdateUserDto, currentUser: IJwtUserInfo) {
+        this.assertSelfOrAdmin(id, currentUser);
+
         await this.userRepository.update( id, body)
 
         return this.getOneById(id);
