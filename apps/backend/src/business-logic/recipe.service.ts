@@ -9,14 +9,11 @@ import { RecipeRepository } from '@/src/repositories/recipe.repository';
 
 @Injectable()
 export class RecipeService {
-    constructor(private readonly recipeRepository: RecipeRepository) { }
+    constructor(private readonly recipeRepository: RecipeRepository) {}
 
     getOneById(id: number) {
         return this.recipeRepository.findOne({
             where: { id },
-            relations: {
-                author: true,
-            },
         });
     }
 
@@ -36,9 +33,6 @@ export class RecipeService {
             where: whereOptions,
             skip: (collectionOptions.page - 1) * collectionOptions.perPage,
             take: collectionOptions.perPage,
-            relations: {
-                author: true,
-            },
         });
 
         return {
@@ -65,8 +59,6 @@ export class RecipeService {
             });
         }
 
-        const createdRecipe = await this.recipeRepository.save(body);
-
-        return this.getOneById(createdRecipe.id);
+        return this.recipeRepository.save(body);
     }
 }

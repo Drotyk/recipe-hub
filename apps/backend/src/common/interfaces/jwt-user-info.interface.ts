@@ -3,3 +3,7 @@ export interface IJwtUserInfo {
     email: string,
     isAdmin?: boolean,
 }
+
+export interface IAuthenticatedRequest {
+    user: IJwtUserInfo;
+}

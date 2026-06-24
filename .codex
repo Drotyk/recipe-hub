@@ -1,0 +1,51 @@
+# Project Instructions
+
+This is a pnpm workspace project.
+
+## Structure
+- `apps/backend` - NestJS backend
+- `apps/frontend` - Vite React frontend
+- `docker-compose.yml` - local Postgres/pgAdmin services
+
+## Commands
+- Install dependencies only from repo root: `pnpm install`
+- Start Docker services: `pnpm docker:up`
+- Start backend dev server: `pnpm backend:start:dev`
+- Start frontend dev server: `pnpm frontend:start`
+- Build backend: `pnpm backend:build`
+- Build frontend: `pnpm frontend:build`
+- Run backend lint: `pnpm backend:lint`
+
+## AI Context Files
+- Read `.ai/ai-context.md` before larger changes.
+- Use `.ai/architecture.md` for backend/frontend structure.
+- Use `.ai/conventions.md` before editing code.
+- Use `.ai/stack.md` for commands and dependencies.
+
+## Rules
+- Do not run `pnpm install` inside `apps/backend` or `apps/frontend`.
+- Do not edit `.env` unless explicitly requested.
+- Keep backend code in `apps/backend/src`.
+- Keep frontend code in `apps/frontend/src`.
+
+## Verification
+- For backend changes, run `pnpm backend:build`.
+- For frontend changes, run `pnpm frontend:build`.
+- For backend style changes, run `pnpm backend:lint`.
+- Automated tests are not configured yet.
+
+## Database
+- TypeORM synchronize is disabled.
+- Use migrations for database schema changes.
+- Run migration commands from repo root through root scripts.
+
+## Backend Rules
+- Endpoints are protected by JWT by default.
+- Use `@Public()` only for endpoints that should work without auth.
+- Keep collection responses in `{ items, metadata }` format.
+- If changing entities or DTOs, check frontend API types in `apps/frontend/src/api.ts`.
+
+## Frontend Rules
+- Routing is custom and lives in `apps/frontend/src/app/routing.ts`.
+- API calls and shared API types live in `apps/frontend/src/api.ts`.
+- Auth state lives in `apps/frontend/src/auth.tsx`.

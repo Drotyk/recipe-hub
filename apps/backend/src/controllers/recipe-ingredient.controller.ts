@@ -8,11 +8,13 @@ import {
     Patch,
     Post,
     Query,
+    Req,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 
 import { RecipeIngredientService } from '@/src/business-logic';
+import { IAuthenticatedRequest } from '@/src/common/interfaces';
 import { CollectionOptionsDto } from '@/src/domains/view-models/collection';
 import {
     CreateRecipeIngredientsDto,
@@ -23,6 +25,7 @@ import {
 
 
 @ApiTags('RecipeIngredient')
+@ApiBearerAuth()
 @Controller('recipeIngredient')
 export class RecipeIngredientController {
     constructor(private readonly recipeIngredientService: RecipeIngredientService) {}
@@ -46,8 +49,9 @@ export class RecipeIngredientController {
     @Post()
     async createRecipeIngredient(
         @Body() createRecipeIngredientDto: CreateRecipeIngredientsDto,
+        @Req() req: IAuthenticatedRequest,
     ) {
-        const data = await this.recipeIngredientService.createRecipeIngredient(createRecipeIngredientDto);
+        const data = await this.recipeIngredientService.createRecipeIngredient(createRecipeIngredientDto, req.user);
 
         return plainToInstance(ViewRecipeIngredientDto, data);
     }
@@ -56,15 +60,19 @@ export class RecipeIngredientController {
     async updateRecipeIngredient(
         @Param('id', ParseIntPipe) id: number,
         @Body() body: UpdateRecipeIngredientsDto,
+        @Req() req: IAuthenticatedRequest,
     ) {
-        const data = await this.recipeIngredientService.updateRecipeIngredient(id, body);
+        const data = await this.recipeIngredientService.updateRecipeIngredient(id, body, req.user);
 
         return plainToInstance(ViewRecipeIngredientDto, data);
     }
 
     @Delete(':id')
-    async deleteRecipeIngredient(@Param('id', ParseIntPipe) id: number) {
-        const data = await this.recipeIngredientService.deleteRecipeIngredient(id);
+    async deleteRecipeIngredient(
+        @Param('id', ParseIntPipe) id: number,
+        @Req() req: IAuthenticatedRequest,
+    ) {
+        const data = await this.recipeIngredientService.deleteRecipeIngredient(id, req.user);
 
         return plainToInstance(ViewRecipeIngredientDto, data);
     }

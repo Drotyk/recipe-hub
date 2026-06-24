@@ -13,4 +13,12 @@ export class ViewUserDto extends AbstractDto {
     @Expose()
     @ApiProperty()
     email: string;
+
+    @Expose()
+    @ApiProperty({ required: false })
+    bio?: string;
+
+    @Expose()
+    @ApiProperty({ required: false })
+    social?: string;
 }
