@@ -21,7 +21,7 @@
 
 ## Про проєкт
 
-**Recipe Hub** — це повнофункціональний веб-додаток для публікації, пошуку та коментування кулінарних рецептів.
+**Recipe Hub** - це повнофункціональний веб-додаток для публікації, пошуку та коментування кулінарних рецептів.
 Проєкт побудовано як монорепозиторій за допомогою `pnpm workspace`, що поєднує строго типізований бекенд на **NestJS** (TypeORM, PostgreSQL) та сучасний фронтенд на **React** (Vite).
 
 ---
@@ -32,11 +32,11 @@
 
 CI виконує такі етапи:
 1. `pnpm install --frozen-lockfile` — встановлення залежностей з перевіркою lockfile.
-2. `pnpm backend:lint` — перевірка коду ESLint на відповідність стандартам.
-3. `pnpm backend:test` — запуск **43 unit-тестів** (Auth, Recipe, Comment, DTO validation).
-4. `pnpm backend:build` — компіляція бекенду NestJS (`nest build`).
-5. `pnpm frontend:lint` — перевірка типів TypeScript (`tsc --noEmit`).
-6. `pnpm frontend:build` — збірка фронтенду (`vite build`).
+2. `pnpm backend:lint` - перевірка коду ESLint на відповідність стандартам.
+3. `pnpm backend:test` - запуск **43 unit-тестів** (Auth, Recipe, Comment, DTO validation).
+4. `pnpm backend:build` - компіляція бекенду NestJS (`nest build`).
+5. `pnpm frontend:lint` - перевірка типів TypeScript (`tsc --noEmit`).
+6. `pnpm frontend:build` - збірка фронтенду (`vite build`).
 
 ---
 
