@@ -6,7 +6,7 @@
 
   <!-- Баджі -->
   <p>
-    <a href="https://github.com/Drotyk/algoritm-lab/actions/workflows/ci.yml">
+    <a href="https://github.com/Drotyk/Recipe Hub/actions/workflows/ci.yml">
   <img src="https://img.shields.io/github/actions/workflow/status/Drotyk/algoritm-lab/ci.yml?style=for-the-badge&logo=github&label=CI" alt="CI Status" />
 </a>
 <img src="https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="NestJS" />
