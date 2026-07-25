@@ -6,11 +6,13 @@ import {
     Param,
     ParseIntPipe,
     Post,
+    Req,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { plainToInstance } from 'class-transformer';
 
 import { CommentService } from '@/src/business-logic';
+import { IAuthenticatedRequest } from '@/src/common/interfaces';
 import { CreateCommentDto, ViewCommentDto } from '@/src/domains/view-models/comment';
 
 
@@ -32,16 +34,20 @@ export class CommentController {
     async createComment(
         @Param('recipeId', ParseIntPipe) recipeId: number,
         @Body() body: CreateCommentDto,
+        @Req() req: IAuthenticatedRequest,
     ) {
-        const data = await this.commentService.createComment(recipeId, body);
+        const data = await this.commentService.createComment(recipeId, body, req.user);
 
         return plainToInstance(ViewCommentDto, data);
     }
 
     @Delete('comment/:id')
     @ApiOkResponse({ type: ViewCommentDto })
-    async deleteComment(@Param('id', ParseIntPipe) id: number) {
-        const data = await this.commentService.deleteComment(id);
+    async deleteComment(
+        @Param('id', ParseIntPipe) id: number,
+        @Req() req: IAuthenticatedRequest,
+    ) {
+        const data = await this.commentService.deleteComment(id, req.user);
 
         return plainToInstance(ViewCommentDto, data);
     }

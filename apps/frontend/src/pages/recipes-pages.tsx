@@ -324,7 +324,6 @@ export function RecipeCreatePage({ onNavigate, onMessage }: PageProps) {
       const created = await createRecipe({
         name: name.trim(),
         text: text.trim(),
-        authorId: sessionUser.id,
       });
 
       // 2. Attach ingredients sequentially
@@ -665,7 +664,6 @@ export function RecipeDetailPage({ id, onNavigate, onMessage }: PageProps & { id
     try {
       const newComment = await createComment(id, {
         text: commentText.trim(),
-        authorId: sessionUser.id,
       });
       setComments((prev) => [newComment, ...prev]);
       setCommentText('');

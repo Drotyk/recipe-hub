@@ -1,7 +1,7 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { ILike } from 'typeorm';
 
-import { UserEntity } from '@/src/domains/entities';
+import { IJwtUserInfo } from '@/src/common/interfaces';
 import { CollectionMetadata, CollectionOptionsDto } from '@/src/domains/view-models/collection';
 import { CreateRecipeDto, UpdateRecipeDto } from '@/src/domains/view-models/recipe';
 import { RecipeRepository } from '@/src/repositories/recipe.repository';
@@ -17,15 +17,34 @@ export class RecipeService {
         });
     }
 
-    async updateRecipe(id: number, body: UpdateRecipeDto) {
+    async updateRecipe(id: number, body: UpdateRecipeDto, currentUser: IJwtUserInfo) {
+        const recipe = await this.getOneById(id);
+
+        if (!recipe) {
+            throw new NotFoundException({ message: 'Recipe was not found', id });
+        }
+        if (recipe.authorId !== currentUser.id && !currentUser.isAdmin) {
+            throw new ForbiddenException({ message: 'You are not allowed to update this recipe' });
+        }
+
         await this.recipeRepository.update(id, body);
 
         return this.getOneById(id);
     }
 
-    deleteRecipe(id: number) {
+    async deleteRecipe(id: number, currentUser: IJwtUserInfo) {
+        const recipe = await this.getOneById(id);
+
+        if (!recipe) {
+            throw new NotFoundException({ message: 'Recipe was not found', id });
+        }
+        if (recipe.authorId !== currentUser.id && !currentUser.isAdmin) {
+            throw new ForbiddenException({ message: 'You are not allowed to delete this recipe' });
+        }
+
         return this.recipeRepository.softDelete(id);
     }
+
     async getRecipeCollection(collectionOptions: CollectionOptionsDto) {
         const whereOptions = collectionOptions?.search ? { name: ILike(`%${collectionOptions?.search}%`) } : {};
 
@@ -46,19 +65,10 @@ export class RecipeService {
         }
     }
 
-    async createRecipe(body: CreateRecipeDto) {
-        const authorUser = await this.recipeRepository
-            .manager
-            .getRepository(UserEntity)
-            .findOne({ where: { id: body.authorId } });
-
-        if (!authorUser) {
-            throw new BadRequestException({
-                message: 'User with id = authorId was not found',
-                authorId: body.authorId,
-            });
-        }
-
-        return this.recipeRepository.save(body);
+    async createRecipe(body: CreateRecipeDto, currentUser: IJwtUserInfo) {
+        return this.recipeRepository.save({
+            ...body,
+            authorId: currentUser.id,
+        });
     }
 }

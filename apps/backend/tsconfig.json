@@ -15,15 +15,17 @@
     "incremental": true,
     "tsBuildInfoFile": "../../dist/apps/backend/tsconfig.tsbuildinfo",
     "skipLibCheck": true,
-    "strictNullChecks": false,
-    "noImplicitAny": false,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictPropertyInitialization": false,
     "strictBindCallApply": false,
-    "forceConsistentCasingInFileNames": false,
+    "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": false,
     "paths": {
       "@/": ["./"],
-      "@/*": ["./*"],
-    }
+      "@/*": ["./*"]
+    },
+    "types": ["jest", "node"]
   },
   "exclude": [
     "node_modules",

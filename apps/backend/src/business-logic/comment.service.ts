@@ -1,6 +1,7 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 
-import { RecipeEntity, UserEntity } from '@/src/domains/entities';
+import { IJwtUserInfo } from '@/src/common/interfaces';
+import { RecipeEntity } from '@/src/domains/entities';
 import { CreateCommentDto } from '@/src/domains/view-models/comment';
 import { CommentRepository } from '@/src/repositories/comment.repository';
 
@@ -21,7 +22,7 @@ export class CommentService {
         });
     }
 
-    async createComment(recipeId: number, body: CreateCommentDto) {
+    async createComment(recipeId: number, body: CreateCommentDto, currentUser: IJwtUserInfo) {
         const recipeExists = await this.commentRepository.manager
             .getRepository(RecipeEntity)
             .findOne({ where: { id: recipeId } });
@@ -33,21 +34,10 @@ export class CommentService {
             });
         }
 
-        const authorExists = await this.commentRepository.manager
-            .getRepository(UserEntity)
-            .findOne({ where: { id: body.authorId } });
-
-        if (!authorExists) {
-            throw new BadRequestException({
-                message: 'Author user was not found',
-                authorId: body.authorId,
-            });
-        }
-
         const commentToSave = this.commentRepository.create({
             text: body.text,
             recipeId,
-            authorId: body.authorId,
+            authorId: currentUser.id,
         });
 
         const savedComment = await this.commentRepository.save(commentToSave);
@@ -60,7 +50,7 @@ export class CommentService {
         });
     }
 
-    async deleteComment(id: number) {
+    async deleteComment(id: number, currentUser: IJwtUserInfo) {
         const comment = await this.commentRepository.findOne({ where: { id } });
 
         if (!comment) {
@@ -68,6 +58,9 @@ export class CommentService {
                 message: 'Comment was not found',
                 id,
             });
+        }
+        if (comment.authorId !== currentUser.id && !currentUser.isAdmin) {
+            throw new ForbiddenException({ message: 'You are not allowed to delete this comment' });
         }
 
         await this.commentRepository.delete(id);

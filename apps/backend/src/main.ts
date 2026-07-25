@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import cookieParser from 'cookie-parser';
 import { SwaggerTheme, SwaggerThemeNameEnum } from 'swagger-themes';
 
 import { AppModule } from './app.module';
@@ -10,11 +11,13 @@ async function bootstrap() {
     const logger = new Logger('Bootstrap');
 
     const app = await NestFactory.create(AppModule);
-    app.enableCors();
 
-    app.enableCors();
+    app.enableCors({
+        origin: process.env['FRONTEND_URL'],
+        credentials: true,
+    });
 
-    app.enableCors();
+    app.use(cookieParser());
 
     const configSwagger = new DocumentBuilder()
         .setTitle('Algoritm-lab')
@@ -35,8 +38,10 @@ async function bootstrap() {
         customCss: theme.getBuffer(SwaggerThemeNameEnum.FLATTOP),
     });
 
-    await app.listen(3000);
-    logger.log('Програма запущена на http://localhost:3000');
-    logger.log('Документація (Swagger) на http://localhost:3000/api-docs');
+    const port = Number(process.env['PORT'] ?? 3000);
+
+    await app.listen(port);
+    logger.log(`Програма запущена на http://localhost:${port}`);
+    logger.log(`Документація (Swagger) на http://localhost:${port}/api-docs`);
 }
 bootstrap().then();

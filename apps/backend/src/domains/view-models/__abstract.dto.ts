@@ -6,17 +6,17 @@ import { Exclude, Expose } from 'class-transformer';
 export class AbstractDto {
     @Expose()
     @ApiProperty()
-    id: number;
+    id!: number;
 
     @Expose()
     @ApiProperty()
-    createdAt: Date;
+    createdAt!: Date;
 
     @Expose()
     @ApiProperty()
-    updatedAt: Date;
+    updatedAt!: Date;
 
     @Expose()
     @ApiProperty()
-    deletedAt: Date;
+    deletedAt!: Date;
 }

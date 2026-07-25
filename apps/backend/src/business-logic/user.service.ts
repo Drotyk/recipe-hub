@@ -2,8 +2,9 @@ import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/com
 import { ILike } from 'typeorm';
 
 
-import { hashPassword } from '@/src/common/utils';
 import { IJwtUserInfo } from '@/src/common/interfaces';
+import { hashPassword } from '@/src/common/utils';
+import { UserEntity } from '@/src/domains/entities';
 import { CollectionMetadata, CollectionOptionsDto } from '@/src/domains/view-models/collection';
 import { CreateUserDto } from '@/src/domains/view-models/user';
 import { UpdateUserDto } from '@/src/domains/view-models/user/update.user.dto';
@@ -36,7 +37,7 @@ export class UserService {
         return this.getOneById(id);
     }
 
-    async createUser(body: CreateUserDto) {
+    async createUser(body: CreateUserDto): Promise<UserEntity> {
         const existingUser = await this.userRepository.findOne({
             where: { email: body.email },
         });

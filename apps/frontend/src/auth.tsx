@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
-import { apiFetch, SessionTokens } from './api';
+import { apiFetch, exchangeOAuthCode, SessionTokens, setApiAccessToken } from './api';
 
 export type SessionUser = {
   id: number;
@@ -48,23 +48,42 @@ function decodeToken(accessToken: string | null) {
 }
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [accessToken, setAccessToken] = useState<string | null>(localStorage.getItem('accessToken'));
+  // Access token живе лише в пам'яті — localStorage/sessionStorage не використовується,
+  // тому XSS-атака не може вкрасти токен.
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
+  // Синхронізуємо in-memory токен з API-модулем при кожній зміні.
   useEffect(() => {
-    if (accessToken) {
-      localStorage.setItem('accessToken', accessToken);
+    setApiAccessToken(accessToken);
+  }, [accessToken]);
+
+  // При першому рендері перевіряємо query-параметри: чи є oauthCode після Google OAuth.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const oauthCode = params.get('oauthCode');
+
+    if (!oauthCode) {
       return;
     }
 
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-  }, [accessToken]);
+    // Одразу видаляємо код з URL, щоб він не залишався в історії браузера.
+    params.delete('oauthCode');
+    const cleanUrl = [window.location.pathname, params.toString() ? `?${params.toString()}` : ''].join('');
+    window.history.replaceState({}, '', cleanUrl);
+
+    exchangeOAuthCode(oauthCode)
+      .then((tokens) => setAccessToken(tokens.accessToken ?? null))
+      .catch(() => {
+        // Код протермінований або недійсний — користувач побачить форму входу.
+      });
+  }, []);
 
   const sessionUser = useMemo(() => decodeToken(accessToken), [accessToken]);
 
   function storeTokens(tokens: SessionTokens) {
+    // Зберігаємо лише access token у пам'яті.
+    // Refresh token зберігається сервером у HttpOnly cookie — JS його не бачить.
     setAccessToken(tokens.accessToken ?? null);
-    localStorage.setItem('refreshToken', tokens.refreshToken ?? '');
   }
 
   const login = async (email: string, password: string) => {

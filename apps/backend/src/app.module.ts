@@ -1,11 +1,12 @@
 import { Module, ValidationPipe } from '@nestjs/common';
-import { APP_PIPE } from '@nestjs/core';
+import { APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 
 
 import { UserService, CommentService } from '@/src/business-logic';
 import { IngredientService, RecipeIngredientService, RecipeService } from '@/src/business-logic';
-import { AuthService } from '@/src/business-logic/auth';
+import { AuthService, JwtStrategy } from '@/src/business-logic/auth';
+import { JwtAuthGuard } from '@/src/common/guards';
 import { loadEnv } from '@/src/common/utils';
 import {
     RecipeController,
@@ -36,6 +37,11 @@ loadEnv();
         CommentController,
     ],
     providers: [
+        JwtStrategy,
+        {
+            provide: APP_GUARD,
+            useClass: JwtAuthGuard,
+        },
         UserService,
         RecipeIngredientService,
         RecipeService,

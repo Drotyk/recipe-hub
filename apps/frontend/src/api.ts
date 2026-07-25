@@ -78,8 +78,16 @@ export type CollectionQuery = {
   ingredientId?: number;
 };
 
-export async function apiFetch<T>(path: string, opts: RequestInit = {}): Promise<T> {
-  const token = localStorage.getItem('accessToken');
+// Зберігаємо access token у пам'яті модуля (не в localStorage).
+// auth.tsx оновлює це значення через setApiAccessToken().
+let _accessToken: string | null = null;
+
+export function setApiAccessToken(token: string | null) {
+  _accessToken = token;
+}
+
+export async function apiFetch<T>(path: string, opts: RequestInit = {}, accessToken?: string | null): Promise<T> {
+  const token = accessToken !== undefined ? accessToken : _accessToken;
   const headers: Record<string, string> = {
     ...(opts.body ? { 'Content-Type': 'application/json' } : {}),
     ...((opts.headers as Record<string, string>) || {}),
@@ -92,6 +100,7 @@ export async function apiFetch<T>(path: string, opts: RequestInit = {}): Promise
   const res = await fetch(`${API_BASE}${path}`, {
     ...opts,
     headers,
+    credentials: 'include',
   });
 
   if (!res.ok) {
@@ -105,6 +114,17 @@ export async function apiFetch<T>(path: string, opts: RequestInit = {}): Promise
   }
 
   return JSON.parse(text) as T;
+}
+
+/**
+ * Обмінює короткоживучий OAuth-код (з query-параметра) на повноцінну пару токенів.
+ * Викликається одразу після редиректу з Google callback.
+ */
+export function exchangeOAuthCode(oauthCode: string) {
+  return apiFetch<SessionTokens>('/auth/exchange', {
+    method: 'POST',
+    body: JSON.stringify({ oauthCode }),
+  });
 }
 
 export async function readApiError(error: unknown) {
@@ -198,7 +218,7 @@ export function deleteIngredient(id: number) {
   });
 }
 
-export function createRecipe(input: { name: string; text: string; authorId: number }) {
+export function createRecipe(input: { name: string; text: string }) {
   return apiFetch<Recipe>('/recipe', {
     method: 'POST',
     body: JSON.stringify(input),
@@ -226,7 +246,7 @@ export function getRecipeComments(recipeId: number) {
   return apiFetch<Comment[]>(`/recipe/${recipeId}/comments`);
 }
 
-export function createComment(recipeId: number, input: { text: string; authorId: number }) {
+export function createComment(recipeId: number, input: { text: string }) {
   return apiFetch<Comment>(`/recipe/${recipeId}/comments`, {
     method: 'POST',
     body: JSON.stringify(input),

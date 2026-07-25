@@ -3,8 +3,6 @@ import { randomBytes } from 'crypto';
 import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { StringValue } from 'ms';
-
 
 import { UserService } from '@/src/business-logic/user.service';
 import { IJwtUserInfo } from '@/src/common/interfaces';
@@ -13,8 +11,9 @@ import { LoginDto, RegisterDto } from '@/src/domains/view-models/auth';
 
 @Injectable()
 export class AuthService {
-    private readonly jwtExpiresIn: StringValue = '1h';
-    private readonly jwtRefreshExpiresIn: StringValue = '7d';
+    private readonly jwtExpiresIn = '1h';
+    private readonly jwtRefreshExpiresIn = '7d';
+    private readonly oauthCodeExpiresIn = '2m';
     private readonly googleAuthorizeUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
     private readonly googleTokenUrl = 'https://oauth2.googleapis.com/token';
     private readonly googleUserInfoUrl = 'https://www.googleapis.com/oauth2/v3/userinfo';
@@ -68,6 +67,46 @@ export class AuthService {
     }
 
     /**
+     * @ai-context Перевіряє refresh token і видає нову пару токенів.
+     * Refresh token передається через HttpOnly cookie, тому доступний лише серверу.
+     */
+    async refreshTokens(refreshToken: string) {
+        try {
+            const payload = this.jwtService.verify(refreshToken) as IJwtUserInfo;
+
+            return this.generateTokenPair({
+                id: payload.id,
+                email: payload.email,
+                isAdmin: payload.isAdmin,
+            });
+        } catch {
+            throw new UnauthorizedException('Invalid or expired refresh token');
+        }
+    }
+
+    /**
+     * @ai-context Обмінює короткоживучий одноразовий OAuth-код на повноцінну пару токенів.
+     * Код підписано JWT на 2 хвилини і містить лише user payload — жодних session secrets.
+     */
+    async exchangeOAuthCode(oauthCode: string) {
+        try {
+            const payload = this.jwtService.verify(oauthCode) as IJwtUserInfo & { type?: string };
+
+            if (payload.type !== 'oauth-code') {
+                throw new Error('Wrong token type');
+            }
+
+            return this.generateTokenPair({
+                id: payload.id,
+                email: payload.email,
+                isAdmin: payload.isAdmin,
+            });
+        } catch {
+            throw new UnauthorizedException('Invalid or expired OAuth code');
+        }
+    }
+
+    /**
      * @ai-context OAuth state підписується JWT на 10 хвилин.
      * Callback має перевірити provider, щоб не приймати чужий або підмінений state.
      */
@@ -97,6 +136,8 @@ export class AuthService {
     /**
      * @ai-context Google OAuth або логінить існуючого користувача за verified email,
      * або створює нового з випадковим паролем, бо пароль напряму не використовується.
+     * Повертає короткоживучий одноразовий код (2 хв), а не токени напряму,
+     * щоб не передавати session secrets через URL або історію браузера.
      */
     async loginWithGoogle(code: string, state: string) {
         const clientId = process.env['GOOGLE_CLIENT_ID'];
@@ -163,17 +204,19 @@ export class AuthService {
 
         const existingUser = await this.userService.getOneByEmail(googleUser.email);
 
-        if (existingUser) {
-            return this.generateTokenPair(existingUser);
-        }
-
-        const generatedPassword = randomBytes(24).toString('hex');
-        const createdUser = await this.userService.createUser({
+        const user = existingUser ?? await this.userService.createUser({
             email: googleUser.email,
             name: googleUser.name || googleUser.email.split('@')[0],
-            password: generatedPassword,
+            password: randomBytes(24).toString('hex'),
         });
 
-        return this.generateTokenPair(createdUser);
+        // Повертаємо короткоживучий одноразовий код замість токенів,
+        // щоб вони не залишалися в URL-рядку / history браузера.
+        const oauthCode = this.jwtService.sign(
+            { id: user.id, email: user.email, isAdmin: (user as IJwtUserInfo).isAdmin ?? false, type: 'oauth-code' },
+            { expiresIn: this.oauthCodeExpiresIn },
+        );
+
+        return { oauthCode };
     }
 }

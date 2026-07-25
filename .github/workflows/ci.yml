@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+jobs:
+  ci:
+    name: Lint · Test · Build
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── checkout ──────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── pnpm ──────────────────────────────────────────────────────────────
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.3.0
+
+      # ── node ──────────────────────────────────────────────────────────────
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      # ── dependencies ──────────────────────────────────────────────────────
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # ── backend ───────────────────────────────────────────────────────────
+      - name: Backend · Lint
+        run: pnpm backend:lint
+
+      - name: Backend · Test
+        run: pnpm backend:test
+
+      - name: Backend · Build
+        run: pnpm backend:build
+
+      # ── frontend ──────────────────────────────────────────────────────────
+      - name: Frontend · Lint (type-check)
+        run: pnpm frontend:lint
+
+      - name: Frontend · Test
+        run: pnpm frontend:test
+
+      - name: Frontend · Build
+        run: pnpm frontend:build

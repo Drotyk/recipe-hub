@@ -1,26 +1,29 @@
-import { Global, Module } from '@nestjs/common';
+import { Global, Module, Provider } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { ormConfig } from '@/ormconfig';
-import * as entities from '@/src/domains/entities'
-import * as repositories from '@/src/repositories'
+import * as entities from '@/src/domains/entities';
+import * as repositories from '@/src/repositories';
 
 
-const entityClasses = Object.keys(entities)
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
+const entitiesMap = entities as Record<string, Function>;
+const repositoriesMap = repositories as Record<string, Provider>;
+
+const entityClasses = Object.keys(entitiesMap)
     .filter((entityName) => /\w+Entity/.test(entityName))
-    .map((entityName) => entities[entityName]);
+    .map((entityName) => entitiesMap[entityName]);
 
-const entityProviders = Object.keys(entities)
+const entityProviders = Object.keys(entitiesMap)
     .filter((entityName) => /\w+Entity/.test(entityName))
     .map((entityName) => ({
-        provide: entities[entityName],
-        useValue: entities[entityName],
-    }),
-    );
+        provide: entitiesMap[entityName],
+        useValue: entitiesMap[entityName],
+    }));
 
-const repoClasses = Object.keys(repositories)
+const repoClasses = Object.keys(repositoriesMap)
     .filter((name) => /\w+Repository/.test(name))
-    .map((name) => repositories[name]);
+    .map((name) => repositoriesMap[name]);
 
 @Global()
 @Module({
