@@ -4,6 +4,9 @@
 
 ```text
 .
+├── .github/
+│   └── workflows/
+│       └── ci.yml
 ├── apps/
 │   ├── backend/
 │   └── frontend/
@@ -18,7 +21,7 @@ This is a pnpm workspace with separate backend and frontend apps.
 
 ## Backend architecture
 
-Backend follows a simple NestJS layered structure:
+Backend follows a NestJS layered structure with strict TypeScript:
 
 ```text
 apps/backend/src/
@@ -36,20 +39,21 @@ apps/backend/src/
 
 Responsibilities:
 
-- `controllers/` expose HTTP endpoints and convert results to DTOs with `plainToInstance`.
-- `business-logic/` contains services and authorization/business rules.
+- `controllers/` expose HTTP endpoints, apply DTO validation, and convert results with `plainToInstance`.
+- `business-logic/` contains services, unit tests (`*.spec.ts`), and authorization/ownership rules.
 - `repositories/` contain TypeORM repositories.
 - `domains/entities/` contain TypeORM entities.
-- `domains/view-models/` contain DTOs for request/response models.
-- `common/` contains guards, decorators, utilities, and interfaces.
+- `domains/view-models/` contain DTOs and their validation tests.
+- `common/` contains guards, decorators, utilities, cookies and passport strategies.
 - `modules/db.module.ts` wires TypeORM/database access.
 
 Request flow:
 
 ```text
 HTTP request
+-> Global JwtAuthGuard (APP_GUARD)
 -> Controller
--> Service in business-logic
+-> Service in business-logic (Ownership check)
 -> Repository / TypeORM Entity
 -> DTO response
 ```
@@ -64,8 +68,9 @@ HTTP request
   - `whitelist: true`
   - `forbidUnknownValues: true`
   - `forbidNonWhitelisted: true`
+- `cookieParser()` middleware is enabled for `HttpOnly` refresh token cookies.
 - Swagger is configured in `main.ts`.
-- CORS is enabled globally with `app.enableCors()`.
+- CORS is restricted to `process.env.FRONTEND_URL` with `credentials: true`.
 
 ## Backend domain model
 
@@ -94,12 +99,19 @@ All entities extend `AbstractEntity`, which provides:
 - `updatedAt`
 - `deletedAt`
 
-## Authorization rules currently present
+## Authorization & Ownership Enforcement
 
+- Backend strictly ignores any client-supplied `authorId` in body DTOs; `authorId` is extracted directly from the verified JWT (`req.user.id`).
 - Users can update/delete only their own account unless `isAdmin` is true.
 - Recipes can be updated/deleted only by their author unless `isAdmin` is true.
 - Recipe ingredients can be changed only by the owner of the recipe unless `isAdmin` is true.
 - Comments can be deleted only by their author unless `isAdmin` is true.
+
+## Auth Architecture & Token Management
+
+1. **Access Tokens**: Short-lived JWTs stored strictly in-memory on the frontend.
+2. **Refresh Tokens**: Stored in an `HttpOnly`, `Secure`, `SameSite=Strict` cookie (`refreshToken`), preventing XSS access.
+3. **Google OAuth 2.0 Flow**: Google callback generates a short-lived single-use code (`oauthCode`, TTL = 2 min) passed back via URL query, which the frontend immediately exchanges via `POST /auth/exchange` to receive tokens securely.
 
 ## API shape
 
@@ -146,31 +158,18 @@ Responsibilities:
 - `main.tsx` mounts React and providers.
 - `App.tsx` selects page by route and handles auth redirects/toasts.
 - `app/routing.ts` parses `window.location.pathname` and performs navigation with `history.pushState`.
-- `api.ts` defines shared API types and fetch helpers.
-- `auth.tsx` manages login/register/logout and token storage.
+- `api.ts` defines shared API types and fetch helpers with `credentials: 'include'`.
+- `auth.tsx` manages login/register/logout, OAuth exchange, and in-memory token state.
 - `components/` contains reusable UI primitives.
 - `pages/` contains route-level screens.
 
 ## Frontend auth flow
 
-- `AuthProvider` reads `accessToken` from `localStorage`.
+- `AuthProvider` keeps `accessToken` in React state (`useState`), never in `localStorage`.
 - JWT payload is decoded client-side for `sessionUser`.
-- `apiFetch` adds `Authorization: Bearer <token>` when `accessToken` exists.
-- Login/register call backend auth endpoints and store token pair.
-- Logout clears `accessToken` and removes tokens from localStorage.
-
-## Frontend public/private routing
-
-Public route names in `App.tsx`:
-
-- `auth`
-- `about`
-- `support`
-- `recipes`
-- `ingredients`
-
-When there is no access token and route is private, the app navigates to `/auth`.
-When there is an access token and route is `/auth`, the app navigates to `/dashboard`.
+- `apiFetch` adds `Authorization: Bearer <token>` when `accessToken` exists and sets `credentials: 'include'` for cookie transmission.
+- Refreshing tokens is done via `POST /auth/refresh`, reading the `HttpOnly` cookie automatically.
+- Logout calls `POST /auth/logout` to clear server-side cookies and resets in-memory state.
 
 ## Database architecture
 
