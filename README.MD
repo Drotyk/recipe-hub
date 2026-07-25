@@ -7,9 +7,9 @@
   <!-- Баджі -->
   <p>
     <a href="https://github.com/Drotyk/algoritm-lab/actions/workflows/ci.yml">
-      <img src="https://github.com/Drotyk/algoritm-lab/actions/workflows/ci.yml/badge.svg" alt="CI Status" />
-    </a>
-    <img src="https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="NestJS" />
+  <img src="https://img.shields.io/github/actions/workflow/status/Drotyk/algoritm-lab/ci.yml?style=for-the-badge&logo=github&label=CI" alt="CI Status" />
+</a>
+<img src="https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="NestJS" />
     <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
     <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
     <img src="https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white" alt="Postgres" />
