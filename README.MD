@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>Algoritm Lab</h1>
+  <h1>Recipe Hub</h1>
   <p>
     Сучасний веб-застосунок для обміну рецептами, побудований з використанням <strong>NestJS</strong> та <strong>React</strong> у монорепозиторії (pnpm workspace).
   </p>
