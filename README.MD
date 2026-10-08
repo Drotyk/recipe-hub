@@ -22,7 +22,7 @@
 ## Про проєкт
 
 **Recipe Hub** - це повнофункціональний веб-додаток для публікації, пошуку та коментування кулінарних рецептів.
-Проєкт побудовано як монорепозиторій за допомогою `pnpm workspace`, що поєднує строго типізований бекенд на **NestJS** (TypeORM, PostgreSQL) та сучасний фронтенд на **React** (Vite).
+Проєкт побудовано як монорепозиторій за допомогою `pnpm workspace`, що поєднує строго типізований бекенд на **NestJS** (TypeORM, PostgreSQL) та фронтенд на **React** (Vite).
 
 ---
 
@@ -148,27 +148,6 @@ erDiagram
         timestamp deletedAt
     }
 ```
-
----
-
-## Безпекові рішення (Security Decisions)
-
-Всі ключові рішення прийнято згідно з рекомендаціями OWASP:
-
-1. **HttpOnly, Secure, SameSite=Strict Cookies for Refresh Tokens**:
-   Refresh token записується у `Set-Cookie` сервером і недоступний для JavaScript (`document.cookie`), що повністю унеможливлює його викрадення через XSS-атаки.
-2. **In-Memory Access Tokens**:
-   Access token зберігається виключно в пам'яті React-стану (`useState`), без використання `localStorage` чи `sessionStorage`.
-3. **One-Time OAuth Code Exchange**:
-   Після авторизації через Google бекенд повертає не токени напряму в query-параметрах, а підписаний короткоживучий одноразовий код (`oauthCode`, TTL = 2 хвилини). Фронтенд одразу обмінює його через `POST /auth/exchange` та очищає URL через `history.replaceState()`.
-4. **Private-by-Default API**:
-   `JwtAuthGuard` зареєстровано глобально через `APP_GUARD` у `AppModule`. Усі ендпоінти приватні за замовчуванням. Публічні маршрути (`/auth/*`, `GET /recipe`) явно відмічені декоратором `@Public()`.
-5. **Strict Ownership Enforcement**:
-   Бекенд категорично не довіряє `authorId` із тіла запиту клієнта. Значення `authorId` береться виключно із перевіреного JWT (`req.user.id`). Редагування чи видалення дозволено лише автору сутності або `isAdmin: true`.
-6. **Enumeration Protection**:
-   Під час спроби входу при невідомому email або невірному паролі повертається однакова помилка `401 Unauthorized ("Invalid credentials")`.
-
----
 
 ## Швидкий старт
 
